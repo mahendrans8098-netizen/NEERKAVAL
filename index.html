@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>NeerKaval — Flood Intelligence & Emergency Response</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=Noto+Sans+Tamil:wght@400;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --navy:#0B1F3A;--navy2:#132F57;--navy3:#1D4479;
+  --bg:#EDF0F4;--surface:#FFFFFF;--soft:#F4F6F9;--ink:#0F1F38;--muted:#4A5A73;--line:#CDD5E1;
+  --green:#17803F;--yellow:#F2C200;--orange:#D45F00;--red:#D32020;--dred:#7C0A14;--blue:#1A63C7;
+  --green-t:#E2F3E8;--yellow-t:#FFF5C7;--orange-t:#FFEAD3;--red-t:#FCE1E1;--dred-t:#F2D3D7;--blue-t:#E0ECFA;
+  --focus:#1A63C7;
+  --font:'Barlow',system-ui,-apple-system,'Segoe UI',Roboto,sans-serif;
+  --fd:'Barlow Condensed','Barlow',system-ui,'Segoe UI',sans-serif;
+  padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#08111F;--surface:#0F1D33;--soft:#132441;--ink:#E7EDF7;--muted:#9DB0CB;--line:#26406A;
+  --green:#4CC57D;--yellow:#F5CD2E;--orange:#FF9A3D;--red:#FF6060;--dred:#FF7C88;--blue:#6AAEFF;
+  --green-t:#123222;--yellow-t:#3A3208;--orange-t:#3D2408;--red-t:#421515;--dred-t:#40131A;--blue-t:#122A4D;--focus:#8DC2FF;}}
+:root[data-theme="dark"]{
+  --bg:#08111F;--surface:#0F1D33;--soft:#132441;--ink:#E7EDF7;--muted:#9DB0CB;--line:#26406A;
+  --green:#4CC57D;--yellow:#F5CD2E;--orange:#FF9A3D;--red:#FF6060;--dred:#FF7C88;--blue:#6AAEFF;
+  --green-t:#123222;--yellow-t:#3A3208;--orange-t:#3D2408;--red-t:#421515;--dred-t:#40131A;--blue-t:#122A4D;--focus:#8DC2FF;}
+*{box-sizing:border-box}
+html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px);font-size:16px}
+html.large{font-size:18.5px}
+body{height:100%;margin:0;background:var(--bg);color:var(--ink);font-family:var(--font);line-height:1.4;-webkit-font-smoothing:antialiased}
+:lang(ta),.ta{font-family:'Noto Sans Tamil',var(--font)}
+h1,h2,h3,h4,p{margin:0}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--focus);outline-offset:2px}
+.skip{position:absolute;left:-999px;top:0;background:#fff;color:#000;padding:.6rem 1rem;z-index:999}
+.skip:focus{left:8px;top:8px}
+.ic{flex:none;vertical-align:middle}
+#app{min-height:100%}
+.sr{position:absolute;width:1px;height:1px;overflow:hidden;clip:rect(0 0 0 0)}
+
+/* risk classes */
+.lv-safe{--x:var(--green);--xt:var(--green-t);--xc:#fff}
+.lv-watch{--x:var(--yellow);--xt:var(--yellow-t);--xc:#1a1a1a}
+.lv-warn{--x:var(--orange);--xt:var(--orange-t);--xc:#fff}
+.lv-high{--x:var(--red);--xt:var(--red-t);--xc:#fff}
+.lv-crit{--x:var(--dred);--xt:var(--dred-t);--xc:#fff}
+:root[data-theme="dark"] .lv-crit,:root:not([data-theme="light"]) .lv-crit{--xc:#1a0508}
+@media (prefers-color-scheme:light){:root:not([data-theme="dark"]) .lv-crit{--xc:#fff}}
+.rb{display:inline-flex;align-items:center;gap:.35rem;padding:.15rem .55rem .15rem .4rem;border:2px solid var(--x);border-radius:4px;background:var(--xt);color:var(--x);font-weight:700;font-size:.85rem;white-space:nowrap}
+:root[data-theme="light"] .lv-watch .rb,.lv-watch.rb{color:#6b5500}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .lv-watch.rb{color:var(--yellow)}}
+:root[data-theme="dark"] .lv-watch.rb{color:var(--yellow)}
+.rb .n{font-family:var(--fd);font-size:1.05em;font-weight:700}
+.rb.solid{background:var(--x);color:var(--xc)}
+.rb.lg{font-size:1.15rem;padding:.3rem .8rem .3rem .6rem}
+
+/* buttons */
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:.45rem;min-height:40px;padding:.45rem .95rem;border:2px solid var(--navy3);background:var(--surface);color:var(--navy3);border-radius:5px;font-weight:600;text-decoration:none}
+:root[data-theme="dark"] .btn{color:var(--ink);border-color:var(--blue)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn{color:var(--ink);border-color:var(--blue)}}
+.btn:hover{background:var(--soft)}
+.btn.pri{background:var(--navy3);color:#fff;border-color:var(--navy3)}
+.btn.pri:hover{background:var(--navy2)}
+.btn.danger{background:var(--red);border-color:var(--red);color:#fff}
+:root[data-theme="dark"] .btn.danger{color:#1a0505}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .btn.danger{color:#1a0505}}
+.btn.danger:hover{filter:brightness(.92)}
+.btn.ghost{border-color:transparent;background:transparent;color:var(--blue)}
+.btn.sm{min-height:32px;padding:.2rem .6rem;font-size:.88rem}
+.btn.xl{min-height:60px;font-size:1.15rem;width:100%}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.why{border-color:var(--blue);color:var(--blue);background:var(--blue-t);min-height:32px;padding:.15rem .6rem;font-size:.9rem}
+
+/* layout */
+.shell{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh}
+.side{background:var(--navy);color:#DCE6F5;display:flex;flex-direction:column;position:sticky;top:0;height:100vh;overflow:auto}
+.logo{display:flex;align-items:center;gap:.6rem;padding:1rem 1rem .9rem;color:#fff}
+.logo svg{width:32px;height:32px}
+.logo b{font-family:var(--fd);font-size:1.5rem;letter-spacing:.06em;line-height:1}
+.logo small{display:block;font-size:.8rem;opacity:.8;font-family:'Noto Sans Tamil',var(--font)}
+.nav{display:flex;flex-direction:column;padding:.3rem .5rem;gap:2px}
+.nav button{display:flex;align-items:center;gap:.7rem;background:none;border:0;color:inherit;text-align:left;padding:.62rem .7rem;border-radius:4px;border-left:4px solid transparent;font-weight:500}
+.nav button:hover{background:rgba(255,255,255,.08)}
+.nav button[aria-current="page"]{background:rgba(255,255,255,.14);border-left-color:#fff;color:#fff;font-weight:700}
+.nav .sep{height:1px;background:rgba(255,255,255,.15);margin:.5rem .4rem}
+.nav .cnt{margin-left:auto;background:var(--red);color:#fff;font-size:.75rem;padding:0 .4rem;border-radius:9px;font-weight:700}
+.side .foot{margin-top:auto;padding:.8rem 1rem;font-size:.75rem;opacity:.7}
+.top{position:sticky;top:0;z-index:30;background:var(--navy);color:#fff;display:flex;align-items:center;gap:.7rem;padding:.55rem 1rem;padding-top:calc(.55rem + env(safe-area-inset-top,0px));min-height:58px}
+.top .search{position:relative;flex:1;max-width:340px}
+.top .search input{width:100%;height:38px;padding:0 .7rem 0 2.2rem;border-radius:5px;border:1px solid rgba(255,255,255,.3);background:rgba(255,255,255,.1);color:#fff;font:inherit}
+.top .search input::placeholder{color:#C3D1E8}
+.top .search svg{position:absolute;left:.65rem;top:9px;color:#C3D1E8}
+.top .sp{flex:1}
+.pill{display:inline-flex;align-items:center;gap:.4rem;border:1px solid rgba(255,255,255,.35);background:rgba(255,255,255,.08);color:#fff;border-radius:5px;padding:.3rem .6rem;font-weight:600;font-size:.88rem;min-height:36px}
+.pill.on .dot{background:#5BE28A}.pill.off{background:#7C0A14;border-color:#FF9AA3}.pill.off .dot{background:#FF9AA3}
+.dot{width:9px;height:9px;border-radius:50%;background:#aaa;display:inline-block}
+.clock{font-family:var(--fd);font-size:1.25rem;font-weight:600;letter-spacing:.03em;line-height:1}
+.clock small{display:block;font-family:var(--font);font-size:.62rem;font-weight:500;opacity:.8;letter-spacing:.02em}
+.lang{display:inline-flex;border:1px solid rgba(255,255,255,.35);border-radius:5px;overflow:hidden}
+.lang button{background:none;border:0;color:#fff;padding:.3rem .6rem;font-weight:600;min-height:34px}
+.lang button[aria-pressed="true"]{background:#fff;color:var(--navy)}
+.iconbtn{position:relative;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.35);color:#fff;border-radius:5px;width:38px;height:36px;display:inline-flex;align-items:center;justify-content:center}
+.iconbtn .badge{position:absolute;top:-6px;right:-6px;background:var(--red);color:#fff;font-size:.7rem;font-weight:700;border-radius:9px;padding:0 .35rem;min-width:18px;text-align:center}
+.prof{display:flex;align-items:center;gap:.5rem;font-size:.85rem;line-height:1.15}
+.prof .av{width:34px;height:34px;border-radius:50%;background:#fff;color:var(--navy);display:grid;place-items:center;font-weight:700}
+.prof small{opacity:.8;display:block}
+#menuBtn{display:none}
+main{padding:1rem 1.1rem 6rem;max-width:1500px;width:100%;margin:0 auto;outline:0}
+.pgh{display:flex;align-items:flex-end;gap:1rem;flex-wrap:wrap;margin-bottom:.9rem}
+.pgh h1{font-family:var(--fd);font-size:2rem;font-weight:700;line-height:1;letter-spacing:.01em}
+.pgh p{color:var(--muted);margin-top:.2rem}
+.pgh .r{margin-left:auto;display:flex;gap:.5rem;flex-wrap:wrap}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:6px}
+.card>header{display:flex;align-items:center;gap:.6rem;padding:.65rem .9rem;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.card>header h2,.card>header h3{font-size:1rem;font-weight:700}
+.card>header .r{margin-left:auto;display:flex;gap:.4rem;align-items:center;flex-wrap:wrap}
+.card .body{padding:.9rem}
+.grid{display:grid;gap:.9rem}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}.g3{grid-template-columns:repeat(3,minmax(0,1fr))}.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.split{grid-template-columns:minmax(0,1.9fr) minmax(320px,1fr)}
+.split2{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.mt{margin-top:.9rem}
+.muted{color:var(--muted)}.small{font-size:.86rem}.b{font-weight:700}
+.tamil{font-family:'Noto Sans Tamil',var(--font);font-weight:600}
+.num{font-family:var(--fd);font-variant-numeric:tabular-nums}
+
+/* banners */
+.bn{display:flex;align-items:center;gap:.7rem;padding:.6rem 1.1rem;flex-wrap:wrap;border-bottom:2px solid var(--x,var(--line));background:var(--xt,var(--soft));font-weight:600}
+.bn .r{margin-left:auto;display:flex;gap:.4rem}
+.bn.solid{background:var(--x);color:var(--xc);border-color:var(--x)}
+.bn.solid .btn{background:#fff;color:#111;border-color:#fff}
+.bn.info{--x:var(--blue);--xt:var(--blue-t)}
+.bn.info{color:var(--ink)}
+
+/* KPI */
+.kpi{padding:.85rem 1rem;border-left:6px solid var(--x,var(--navy3))}
+.kpi .l{font-weight:600;color:var(--muted);font-size:.9rem;display:flex;gap:.4rem;align-items:center}
+.kpi .v{font-family:var(--fd);font-size:3rem;font-weight:700;line-height:1;margin:.3rem 0 .15rem}
+.kpi .s{font-size:.85rem;color:var(--muted)}
+.kpi.lv-safe,.kpi.lv-high,.kpi.lv-crit,.kpi.lv-warn{}
+.kpi.blue{--x:var(--blue)}
+
+/* map */
+.mapwrap{position:relative;border:1px solid var(--line);border-radius:6px;overflow:hidden;background:#dfe6d3}
+svg.map{display:block;width:100%;height:auto;aspect-ratio:1000/620;touch-action:manipulation}
+.map text{font-family:'Barlow',system-ui,sans-serif;paint-order:stroke;stroke:#fff;stroke-width:3.5px;stroke-linejoin:round;fill:#0B1F3A;pointer-events:none}
+.map .wl{font-family:'Barlow Condensed','Barlow',sans-serif;font-weight:700;font-size:17px}
+.map .ws{font-family:'Barlow Condensed','Barlow',sans-serif;font-weight:700;font-size:15px}
+.map .ml{font-size:11.5px;font-weight:700}
+.map .tl{font-size:13px;font-style:italic;fill:#1d5fa8}
+.map g[data-act]{cursor:pointer}
+.map g.wd:hover path:first-child{fill-opacity:.7}
+.map g.wd:focus-visible{outline:none}
+.map g.wd:focus-visible path:first-child{stroke:#1A63C7;stroke-width:5}
+.map .flood{animation:fl 3s ease-in-out infinite alternate}
+@keyframes fl{from{stroke-opacity:.2}to{stroke-opacity:.38}}
+.map .pulse circle:first-child,.map .pulse polygon{animation:pl 1.6s ease-in-out infinite;transform-origin:center;transform-box:fill-box}
+@keyframes pl{50%{transform:scale(1.12)}}
+.map .flow{stroke-dasharray:14 10;animation:flow 1.2s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-24}}
+.map .ring{animation:ring 2s ease-out infinite;transform-box:fill-box;transform-origin:center}
+@keyframes ring{from{transform:scale(.6);opacity:.9}to{transform:scale(2.2);opacity:0}}
+.mapctl{position:absolute;right:8px;top:8px;display:flex;flex-direction:column;gap:4px}
+.mapctl button{width:36px;height:36px;border:1px solid #8a94a3;background:#fff;color:#0B1F3A;border-radius:4px;font-weight:700;display:grid;place-items:center}
+.livechip{position:absolute;left:8px;top:8px;background:var(--navy);color:#fff;border-radius:4px;padding:.25rem .55rem;font-size:.82rem;font-weight:600;display:flex;gap:.45rem;align-items:center}
+.livechip .dot{background:#5BE28A;animation:blink 1.6s infinite}
+.livechip.stale .dot{background:#FF9AA3;animation:none}
+@keyframes blink{50%{opacity:.35}}
+.legend{display:flex;flex-wrap:wrap;gap:.35rem 1rem;padding:.6rem .2rem 0;font-size:.85rem}
+.legend span{display:inline-flex;align-items:center;gap:.4rem}
+.legend svg{border:1px solid #6b7280}
+.layers{display:flex;flex-wrap:wrap;gap:.3rem .9rem;font-size:.88rem}
+.layers label{display:inline-flex;gap:.35rem;align-items:center;cursor:pointer}
+.layers input{width:18px;height:18px}
+.seg{display:inline-flex;border:2px solid var(--navy3);border-radius:5px;overflow:hidden}
+.seg button{background:var(--surface);border:0;padding:.3rem .8rem;font-weight:600;min-height:34px}
+.seg button[aria-pressed="true"]{background:var(--navy3);color:#fff}
+
+/* lists/tables */
+.wlist{list-style:none;margin:0;padding:0}
+.wlist li{display:flex;align-items:center;gap:.6rem;padding:.55rem .9rem;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.wlist li:last-child{border-bottom:0}
+.wlist li[aria-current="true"]{background:var(--soft)}
+.wlist .nm{font-weight:700;min-width:5.6rem}
+.wlist .lc{color:var(--muted);font-size:.85rem;flex:1;min-width:6rem}
+table.t{width:100%;border-collapse:collapse;font-size:.92rem}
+table.t th{text-align:left;font-size:.8rem;color:var(--muted);padding:.4rem .6rem;border-bottom:2px solid var(--line);font-weight:600}
+table.t td{padding:.5rem .6rem;border-bottom:1px solid var(--line);vertical-align:middle}
+table.t tr.sel td{background:var(--soft)}
+.scroll{overflow-x:auto}
+
+/* 4W */
+.fourw{display:grid;gap:0}
+.fourw .row{display:grid;grid-template-columns:5.5rem 1fr;gap:.6rem;padding:.6rem .9rem;border-bottom:1px solid var(--line)}
+.fourw .row:last-child{border-bottom:0}
+.fourw dt{font-family:var(--fd);font-size:1.25rem;font-weight:700;letter-spacing:.03em;display:flex;align-items:center;gap:.4rem;color:var(--navy3)}
+:root[data-theme="dark"] .fourw dt{color:var(--blue)}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]) .fourw dt{color:var(--blue)}}
+.fourw dd{margin:0}
+.fourw .ta{display:block;font-size:.85rem;color:var(--muted)}
+
+/* chips */
+.chip{display:inline-block;font-size:.68rem;font-weight:700;letter-spacing:.04em;padding:.08rem .4rem;border-radius:3px;border:1.5px solid;white-space:nowrap;vertical-align:middle}
+.c-measured{background:var(--navy3);color:#fff;border-color:var(--navy3)}
+.c-forecast{background:transparent;color:var(--blue);border-color:var(--blue);border-style:dashed}
+.c-ai{background:var(--ink);color:var(--surface);border-color:var(--ink)}
+.c-xai{background:var(--soft);color:var(--ink);border-color:var(--muted)}
+.c-terrain{background:var(--soft);color:var(--muted);border-color:var(--line)}
+.c-est{background:var(--blue-t);color:var(--blue);border-color:var(--blue)}
+
+/* XAI */
+.xai-h{display:flex;flex-wrap:wrap;gap:.6rem;align-items:center;margin-bottom:.5rem}
+.xai-h h3{font-family:var(--fd);font-size:1.6rem;font-weight:700;line-height:1.05}
+.fac{border:1px solid var(--line);border-radius:5px;margin-bottom:.5rem;background:var(--surface)}
+.fac>button{width:100%;display:grid;grid-template-columns:1.2rem minmax(0,1fr) auto;gap:.3rem .7rem;align-items:center;background:none;border:0;padding:.65rem .8rem;text-align:left}
+.fac .fn{font-weight:700;display:flex;gap:.5rem;align-items:center;flex-wrap:wrap}
+.fac .fv{font-family:var(--fd);font-size:1.8rem;font-weight:700;line-height:1}
+.fac .blocks{grid-column:2/4;display:grid;grid-template-columns:repeat(20,1fr);gap:2px}
+.fac .blocks i{height:14px;background:var(--line);border-radius:1px}
+.fac .blocks i.f{background:var(--x)}
+.fac .chev{transition:transform .2s}
+.fac>button[aria-expanded="true"] .chev{transform:rotate(180deg)}
+.fac .det{padding:.2rem .8rem .8rem 2.2rem;border-top:1px dashed var(--line);display:none}
+.fac>button[aria-expanded="true"]+.det{display:block}
+.det dl{display:grid;grid-template-columns:auto 1fr;gap:.2rem 1rem;margin:.5rem 0}
+.det dt{color:var(--muted)}.det dd{margin:0;font-weight:700}
+.det q{display:block;font-style:normal;border-left:4px solid var(--blue);padding:.2rem .7rem;background:var(--blue-t)}
+.tag{font-size:.72rem;font-weight:700;border:1.5px solid var(--muted);border-radius:3px;padding:0 .35rem;color:var(--muted)}
+.drivers{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.5rem}
+.drivers>div{border:1px solid var(--line);border-radius:5px;padding:.5rem .7rem;background:var(--soft)}
+.drivers small{color:var(--muted);display:block}
+.expl{margin:.4rem 0 .8rem;padding-left:1.1rem}
+.expl li{margin:.25rem 0}
+.act{border:2px solid var(--x);background:var(--xt);border-radius:5px;padding:.7rem .9rem}
+.act .b{display:flex;gap:.4rem;align-items:center}
+.note{font-size:.82rem;color:var(--muted);border-left:3px solid var(--line);padding-left:.6rem;margin-top:.7rem}
+.err{display:flex;gap:.7rem;padding:.8rem;border:2px solid var(--orange);background:var(--orange-t);border-radius:5px}
+
+/* meter */
+.meter{display:grid;grid-template-columns:repeat(5,1fr);gap:2px;position:relative;margin-top:.8rem}
+.meter i{height:12px;display:block}
+.meter .mk{position:absolute;top:-8px;width:0;height:0;border-left:7px solid transparent;border-right:7px solid transparent;border-top:9px solid var(--ink);transform:translateX(-7px)}
+.mlabels{display:grid;grid-template-columns:repeat(5,1fr);font-size:.7rem;color:var(--muted);margin-top:2px}
+.bigscore{font-family:var(--fd);font-size:4.4rem;font-weight:700;line-height:.9}
+.mg{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:.6rem}
+.mg>div{border:1px solid var(--line);border-radius:5px;padding:.55rem .7rem}
+.mg .k{font-size:.82rem;color:var(--muted);display:flex;justify-content:space-between;gap:.4rem;align-items:center}
+.mg .v{font-family:var(--fd);font-size:1.6rem;font-weight:700;line-height:1.15}
+
+/* countdown + timeline */
+.cd{text-align:center;padding:.9rem;border:2px solid var(--x,var(--line));background:var(--xt,var(--soft));border-radius:6px}
+.cd .cl{font-weight:700}
+.cd .cn{font-family:var(--fd);font-size:3.6rem;font-weight:700;line-height:1.05;letter-spacing:.04em;font-variant-numeric:tabular-nums}
+.tlist{list-style:none;margin:0;padding:0}
+.tlist li{display:grid;grid-template-columns:28px 1fr auto;gap:.6rem;position:relative;padding:.4rem 0}
+.tlist li::before{content:"";position:absolute;left:13px;top:1.6rem;bottom:-.5rem;width:2px;background:var(--line)}
+.tlist li:last-child::before{display:none}
+.tlist .mk{width:26px;height:26px;border-radius:50%;border:2px solid var(--muted);display:grid;place-items:center;background:var(--surface);color:var(--muted);z-index:1}
+.tlist .done .mk{background:var(--green);border-color:var(--green);color:#fff}
+:root[data-theme="dark"] .tlist .done .mk{color:#052}
+.tlist .cur .mk{border-color:var(--red);color:var(--red);animation:pl 1.6s infinite}
+.tlist .cur{font-weight:700}
+.tlist .tm{font-family:var(--fd);font-size:1.1rem;font-weight:600}
+.tlist .st{font-size:.78rem;color:var(--muted);display:block;font-weight:500}
+
+/* forms */
+label.f{display:block;font-weight:600;margin-bottom:.7rem}
+label.f>span{display:block;margin-bottom:.2rem;font-size:.9rem}
+input[type=text],input[type=password],input[type=time],input[type=number],select,textarea{width:100%;min-height:42px;padding:.45rem .65rem;border:2px solid var(--line);border-radius:5px;background:var(--surface);color:var(--ink);font:inherit}
+textarea{min-height:130px;resize:vertical}
+input:focus,select:focus,textarea:focus{border-color:var(--focus)}
+.chk{display:flex;gap:.5rem;align-items:center;font-weight:600;padding:.3rem 0}
+.chk input{width:20px;height:20px}
+.fieldrow{display:grid;grid-template-columns:1fr 1fr;gap:.7rem}
+.help{font-size:.82rem;color:var(--muted);margin-top:.2rem}
+.fielderr{color:var(--red);font-weight:600;font-size:.88rem;margin-top:.2rem}
+
+/* shelters */
+.sh{padding:.9rem;display:flex;flex-direction:column;gap:.6rem;border-top:6px solid var(--x,var(--navy3))}
+.sh h3{font-size:1.15rem;font-family:var(--fd);letter-spacing:.02em}
+.occ{height:14px;background:var(--line);border-radius:2px;overflow:hidden;display:flex}
+.occ i{display:block;background:var(--x,var(--navy3))}
+.facs{display:flex;flex-wrap:wrap;gap:.3rem .8rem;font-size:.86rem}
+.facs span{display:inline-flex;gap:.3rem;align-items:center}
+.sh dl{display:grid;grid-template-columns:repeat(3,1fr);gap:.4rem;margin:0;text-align:center}
+.sh dl div{background:var(--soft);border-radius:4px;padding:.3rem}
+.sh dt{font-size:.75rem;color:var(--muted)}.sh dd{margin:0;font-family:var(--fd);font-size:1.6rem;font-weight:700;line-height:1.1}
+
+/* progress */
+.pr{margin:.5rem 0}
+.pr .top2{display:flex;justify-content:space-between;font-weight:600;font-size:.9rem}
+.bar{height:12px;background:var(--line);border-radius:2px;overflow:hidden;margin-top:.2rem}
+.bar i{display:block;height:100%;background:var(--blue);width:0;transition:width .9s linear}
+.msgbox{white-space:pre-wrap;border:2px solid var(--line);background:var(--soft);border-radius:8px;padding:.8rem;font-family:'Noto Sans Tamil',var(--font);font-size:.95rem}
+.sos{font-family:ui-monospace,Menlo,Consolas,monospace;background:#0B1F3A;color:#9DF2B6;border-radius:5px;padding:.8rem;white-space:pre-wrap;font-size:.95rem}
+.st-ok{color:var(--green)}.st-warn{color:var(--orange)}.st-down{color:var(--red)}
+.svc{display:grid;grid-template-columns:24px 1fr auto;gap:.6rem;align-items:center;padding:.65rem .9rem;border-bottom:1px solid var(--line)}
+.svc:last-child{border:0}
+.svc b{display:block}
+
+/* architecture */
+.arch{display:flex;flex-direction:column;align-items:center;gap:0}
+.arch .nd{border:2px solid var(--navy3);border-radius:5px;padding:.4rem .9rem;font-weight:700;background:var(--surface);min-width:260px;text-align:center}
+.arch .nd small{display:block;font-weight:500;color:var(--muted)}
+.arch .ar{height:22px;width:2px;background:var(--navy3);position:relative;margin:0}
+.arch .ar::after{content:"";position:absolute;left:-5px;bottom:-1px;border:6px solid transparent;border-top:8px solid var(--navy3);border-bottom:0}
+.arch .fan{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:.6rem;width:100%;max-width:640px}
+.arch .fan .nd{min-width:0}
+pre.code{background:#0B1F3A;color:#D6E4FA;padding:.8rem;border-radius:5px;overflow:auto;font-size:.82rem;margin:0}
+
+/* overlays */
+.scrim{position:fixed;inset:0;background:rgba(5,12,25,.6);z-index:80;display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal{background:var(--surface);color:var(--ink);border-radius:8px;max-width:560px;width:100%;max-height:92vh;overflow:auto;border:2px solid var(--navy3);animation:pop .18s ease-out}
+@keyframes pop{from{transform:translateY(8px);opacity:0}}
+.modal>header{display:flex;align-items:center;gap:.6rem;padding:.8rem 1rem;background:var(--navy);color:#fff}
+.modal>header h2{font-size:1.1rem;flex:1}
+.modal .body{padding:1rem}
+.modal footer{display:flex;gap:.5rem;justify-content:flex-end;padding:.8rem 1rem;border-top:1px solid var(--line);flex-wrap:wrap}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(560px,100%);background:var(--surface);z-index:85;border-left:3px solid var(--navy3);display:flex;flex-direction:column;animation:slide .22s ease-out;box-shadow:-8px 0 30px rgba(0,0,0,.25)}
+@keyframes slide{from{transform:translateX(30px);opacity:0}}
+.drawer>header{display:flex;align-items:center;gap:.6rem;padding:.7rem 1rem;padding-top:calc(.7rem + env(safe-area-inset-top,0px));background:var(--navy);color:#fff}
+.drawer>header h2{flex:1;font-size:1.1rem}
+.drawer .dbody{overflow:auto;padding:1rem;flex:1}
+.drawer footer{padding:.7rem 1rem;padding-bottom:calc(.7rem + env(safe-area-inset-bottom,0px));border-top:1px solid var(--line);display:flex;gap:.5rem;flex-wrap:wrap}
+.pop{position:absolute;right:1rem;top:56px;z-index:60;width:min(360px,calc(100vw - 2rem));background:var(--surface);color:var(--ink);border:2px solid var(--navy3);border-radius:6px}
+#toasts{position:fixed;left:50%;transform:translateX(-50%);top:calc(70px + env(safe-area-inset-top,0px));z-index:120;display:flex;flex-direction:column;gap:.4rem;width:min(520px,calc(100vw - 1.5rem));pointer-events:none}
+.toast{background:var(--navy);color:#fff;border-left:6px solid var(--yellow);padding:.7rem .9rem;border-radius:5px;font-weight:600;animation:pop .2s ease-out;box-shadow:0 6px 20px rgba(0,0,0,.3)}
+
+/* demo dock */
+#dock{position:fixed;left:.7rem;bottom:calc(.7rem + env(safe-area-inset-bottom,0px));z-index:70;background:var(--navy);color:#fff;border:2px solid #fff;border-radius:8px;width:min(340px,calc(100vw - 1.4rem));box-shadow:0 8px 24px rgba(0,0,0,.35)}
+#dock header{display:flex;align-items:center;gap:.5rem;padding:.45rem .7rem;font-weight:700}
+#dock header button{margin-left:auto;background:none;border:0;color:#fff}
+#dock .dbody{padding:.2rem .7rem .7rem}
+#dock .stages{display:grid;grid-template-columns:repeat(4,1fr);gap:4px}
+#dock .stages button{border:2px solid #fff;background:transparent;color:#fff;border-radius:4px;padding:.35rem .1rem;font-weight:700;font-size:.78rem;min-height:40px}
+#dock .stages button[aria-pressed="true"]{background:#fff;color:var(--navy)}
+#dock .row2{display:flex;gap:.4rem;margin-top:.5rem;flex-wrap:wrap}
+#dock .btn{background:transparent;color:#fff;border-color:#fff;min-height:34px;font-size:.85rem}
+#dock .btn.pri{background:#fff;color:var(--navy)}
+#dock label{font-size:.8rem;display:flex;gap:.3rem;align-items:center}
+
+/* citizen */
+.phonewrap{display:grid;grid-template-columns:auto minmax(0,1fr);gap:1.4rem;align-items:start}
+.phone{width:372px;max-width:100%;height:760px;border:10px solid #0B1F3A;border-radius:36px;background:var(--surface);overflow:hidden;display:flex;flex-direction:column;position:relative;box-shadow:0 10px 30px rgba(0,0,0,.25)}
+.ph-top{background:var(--navy);color:#fff;padding:.7rem 1rem .6rem;display:flex;align-items:center;gap:.5rem}
+.ph-top b{font-family:var(--fd);font-size:1.4rem;letter-spacing:.06em}
+.ph-body{flex:1;overflow:auto;padding:.8rem}
+.ph-nav{display:grid;grid-template-columns:repeat(5,1fr);border-top:2px solid var(--line);background:var(--surface)}
+.ph-nav button{background:none;border:0;padding:.5rem 0 .4rem;font-size:.7rem;font-weight:600;display:flex;flex-direction:column;align-items:center;gap:2px;color:var(--muted);min-height:54px}
+.ph-nav button[aria-current="page"]{color:var(--navy3);box-shadow:inset 0 3px 0 var(--navy3)}
+:root[data-theme="dark"] .ph-nav button[aria-current="page"]{color:var(--blue);box-shadow:inset 0 3px 0 var(--blue)}
+.ph-stat{background:var(--x);color:var(--xc);border-radius:8px;padding:1rem;text-align:center}
+.ph-stat h2{font-family:var(--fd);font-size:2rem;line-height:1.05;margin:.3rem 0 .1rem}
+.ph-stat .ta{font-size:1.05rem}
+.ph-notif{background:var(--navy);color:#fff;border-radius:10px;padding:.6rem .8rem;margin-bottom:.7rem;border-left:6px solid var(--red);animation:pop .3s}
+.qgrid{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-top:.7rem}
+.qgrid .btn{flex-direction:column;min-height:78px;font-size:.95rem;text-align:center}
+.route-v{display:flex;flex-direction:column;align-items:stretch;gap:0}
+.route-v .st{border:2px solid var(--line);border-radius:8px;padding:.6rem .8rem;display:flex;gap:.6rem;align-items:center;font-weight:700}
+.route-v .st.safe{border-color:var(--green);background:var(--green-t)}
+.route-v .ln{width:8px;height:38px;margin:0 auto;background:var(--green);border-radius:2px}
+.route-v .ln.bad{background:repeating-linear-gradient(0deg,var(--red) 0 8px,transparent 8px 14px)}
+.avoid{border:2px solid var(--red);background:var(--red-t);border-radius:8px;padding:.6rem .8rem;margin-top:.7rem}
+.avoid li{display:flex;gap:.4rem;align-items:center;font-weight:600;margin:.2rem 0}
+.avoid ul{list-style:none;margin:.3rem 0 0;padding:0}
+
+/* login */
+.login{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(360px,1fr);min-height:100vh}
+.brand{position:relative;background:var(--navy);color:#fff;overflow:hidden;display:flex;align-items:center;padding:2rem 3rem}
+.brand svg.bm{position:absolute;inset:0;width:100%;height:100%;opacity:1}
+.brand-in{position:relative;max-width:560px}
+.wm{font-family:var(--fd);font-size:clamp(3.4rem,8vw,6.4rem);font-weight:700;letter-spacing:.06em;line-height:.95}
+.wm-ta{font-family:'Noto Sans Tamil',sans-serif;font-size:2rem;font-weight:700;margin:.3rem 0 .8rem}
+.brand .sub{font-size:1.2rem;opacity:.92}
+.brand .tag{font-family:var(--fd);font-size:1.7rem;font-weight:600;margin-top:1.3rem;letter-spacing:.03em;border-top:2px solid rgba(255,255,255,.4);padding-top:.8rem;display:inline-block}
+.loginbox{display:flex;flex-direction:column;justify-content:center;padding:2rem clamp(1.2rem,5vw,4rem);background:var(--surface);position:relative}
+.loginbox form{max-width:420px;width:100%}
+.loginbox h2{font-family:var(--fd);font-size:2rem;margin-bottom:.2rem}
+.loginbox .lang{position:absolute;top:1rem;right:1rem}
+.loginbox .lang button{color:var(--ink)}
+.loginbox .lang{border-color:var(--line)}
+.loginbox .lang button[aria-pressed="true"]{background:var(--navy);color:#fff}
+.sysok{display:inline-flex;gap:.5rem;align-items:center;border:2px solid var(--green);background:var(--green-t);color:var(--green);font-weight:700;padding:.2rem .7rem;border-radius:4px;margin:.8rem 0}
+.sysok .dot{background:var(--green)}
+.sysok.off{border-color:var(--red);background:var(--red-t);color:var(--red)}.sysok.off .dot{background:var(--red)}
+.lfoot{margin-top:2rem;font-size:.85rem;color:var(--muted)}
+
+@media (max-width:1100px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.split{grid-template-columns:minmax(0,1fr)}.g3{grid-template-columns:repeat(2,minmax(0,1fr))}.phonewrap{grid-template-columns:1fr}.phone{margin:0 auto}}
+@media (max-width:900px){
+  .shell{grid-template-columns:minmax(0,1fr)}
+  .side{position:fixed;left:0;top:0;bottom:0;width:260px;z-index:90;transform:translateX(-105%);transition:transform .2s}
+  .nav-open .side{transform:none;box-shadow:8px 0 30px rgba(0,0,0,.4)}
+  #menuBtn{display:inline-flex}
+  .top .search{display:none}.prof span{display:none}.clock small{display:none}
+  .split2,.g2,.g3{grid-template-columns:minmax(0,1fr)}
+  .login{grid-template-columns:minmax(0,1fr)}.brand{padding:2rem 1.4rem;min-height:300px}
+  .drivers{grid-template-columns:1fr}
+  main{padding:.8rem .7rem 8rem}
+}
+@media (max-width:560px){
+  .g4{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}.kpi .v{font-size:2.3rem}
+  .fieldrow{grid-template-columns:1fr}
+  .phone{border:0;border-radius:0;height:calc(100vh - 150px);min-height:560px;box-shadow:none}
+  .top .pill span.t{display:none}
+  .lang button{padding:.3rem .45rem}
+}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to main content</a>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <pattern id="hWarn" width="9" height="9" patternUnits="userSpaceOnUse"><circle cx="2.5" cy="2.5" r="1.5" fill="#B45309" opacity=".7"/></pattern>
+    <pattern id="hHigh" width="8" height="8" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><line x1="0" y1="0" x2="0" y2="8" stroke="#B91C1C" stroke-width="2.4" opacity=".6"/></pattern>
+    <pattern id="hCrit" width="8" height="8" patternUnits="userSpaceOnUse"><path d="M0 0L8 8M8 0L0 8" stroke="#5B0710" stroke-width="1.8" opacity=".75"/></pattern>
+  </defs>
+</svg>
+<div id="app"></div>
+<div id="overlay"></div>
+<div id="dock"></div>
+<div id="toasts" aria-live="polite"></div>
+
+<script>
+'use strict';
+/* =====================================================================
+   NEERKAVAL — prototype front end
+   All data below is MOCK / ILLUSTRATIVE. Replace the `API` facade
+   (see "DATA LAYER") with fetch() calls to the FastAPI service later.
+   ===================================================================== */
+const $=(s,e=document)=>e.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const p2=n=>String(n).padStart(2,'0');
+const f12=m=>{m=Math.round(m);const h=Math.floor(m/60)%24,mm=m%60;return `${p2(((h+11)%12)+1)}:${p2(mm)} ${h>=12?'PM':'AM'}`};
+const fClock=s=>{const h=Math.floor(s/3600)%24,m=Math.floor(s%3600/60),ss=Math.floor(s%60);return `${p2(((h+11)%12)+1)}:${p2(m)}:${p2(ss)} ${h>=12?'PM':'AM'}`};
+const fHMS=s=>`${p2(Math.floor(s/3600))} : ${p2(Math.floor(s%3600/60))} : ${p2(Math.floor(s%60))}`;
+const fHM=m=>m==null?'—':(m>=60?`${Math.floor(m/60)}h ${p2(m%60)}m`:`${m}m`);
+const clamp=(v,a,b)=>Math.max(a,Math.min(b,v));
+
+/* ---------- icons ---------- */
+const IC={
+dash:'<rect x="3" y="3" width="7" height="9"/><rect x="14" y="3" width="7" height="5"/><rect x="14" y="12" width="7" height="9"/><rect x="3" y="16" width="7" height="5"/>',
+map:'<path d="M3 6l6-2 6 2 6-2v14l-6 2-6-2-6 2z"/><path d="M9 4v14M15 6v14"/>',
+chart:'<path d="M3 3v18h18"/><path d="M7 15l4-5 3 3 5-7"/>',
+xai:'<circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M18.4 5.6l-2.1 2.1M7.7 16.3l-2.1 2.1"/>',
+route:'<circle cx="6" cy="19" r="2"/><circle cx="18" cy="5" r="2"/><path d="M8 19h8a3 3 0 0 0 0-6H8a3 3 0 0 1 0-6h8"/>',
+home:'<path d="M3 11l9-8 9 8"/><path d="M5 10v10h14V10"/><path d="M10 20v-6h4v6"/>',
+bell:'<path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9"/><path d="M10 21a2 2 0 0 0 4 0"/>',
+file:'<path d="M14 3H6a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V9z"/><path d="M14 3v6h6M8 13h8M8 17h5"/>',
+life:'<circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.5"/><path d="M5.6 5.6l3.9 3.9M14.5 14.5l3.9 3.9M18.4 5.6l-3.9 3.9M9.5 14.5l-3.9 3.9"/>',
+wifioff:'<path d="M2 2l20 20"/><path d="M8.5 16.4a5 5 0 0 1 7 0M2 8.8a15 15 0 0 1 4.2-2.7M22 8.8a15 15 0 0 0-7.6-3.7M5 12.9a10 10 0 0 1 5-2.6M19 12.9a10 10 0 0 0-2.4-1.9"/><path d="M12 20h.01"/>',
+wifi:'<path d="M5 12.9a10 10 0 0 1 14 0M2 8.8a15 15 0 0 1 20 0M8.5 16.4a5 5 0 0 1 7 0"/><path d="M12 20h.01"/>',
+gear:'<circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M19.1 4.9L17 7M7 17l-2.1 2.1"/>',
+search:'<circle cx="11" cy="11" r="7"/><path d="M21 21l-4.3-4.3"/>',
+menu:'<path d="M4 6h16M4 12h16M4 18h16"/>',
+x:'<path d="M18 6L6 18M6 6l12 12"/>',
+send:'<path d="M22 2L11 13"/><path d="M22 2l-7 20-4-9-9-4z"/>',
+check:'<path d="M20 6L9 17l-5-5"/>',
+drop:'<path d="M12 3s6 6.5 6 11a6 6 0 0 1-12 0c0-4.5 6-11 6-11z"/>',
+mountain:'<path d="M3 20l6-11 4 6 3-4 5 9z"/>',
+layers:'<path d="M12 3l9 5-9 5-9-5z"/><path d="M3 13l9 5 9-5"/>',
+clock:'<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+nav:'<path d="M3 11l19-9-9 19-2-8z"/>',
+phone:'<rect x="7" y="2" width="10" height="20" rx="2"/><path d="M11 18h2"/>',
+radio:'<circle cx="12" cy="12" r="2"/><path d="M16.2 7.8a6 6 0 0 1 0 8.4M7.8 16.2a6 6 0 0 1 0-8.4M19 5a10 10 0 0 1 0 14M5 19A10 10 0 0 1 5 5"/>',
+user:'<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>',
+users:'<circle cx="9" cy="8" r="3.5"/><path d="M2 21a7 7 0 0 1 14 0M16 4.5a3.5 3.5 0 0 1 0 7M22 21a7 7 0 0 0-5-6.7"/>',
+shield:'<path d="M12 3l8 3v6c0 5-3.5 8-8 9-4.5-1-8-4-8-9V6z"/><path d="M9 12l2 2 4-4"/>',
+eye:'<path d="M2 12s4-7 10-7 10 7 10 7-4 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/>',
+tri:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',
+oct:'<path d="M8 2h8l6 6v8l-6 6H8l-6-6V8z"/><path d="M12 7v6M12 16h.01"/>',
+siren:'<path d="M7 18v-6a5 5 0 0 1 10 0v6"/><path d="M5 18h14v3H5zM12 2v2M4 6l1.5 1.5M20 6l-1.5 1.5"/>',
+pin:'<path d="M12 21s7-6.5 7-12a7 7 0 0 0-14 0c0 5.5 7 12 7 12z"/><circle cx="12" cy="9" r="2.5"/>',
+server:'<rect x="3" y="4" width="18" height="6" rx="1"/><rect x="3" y="14" width="18" height="6" rx="1"/><path d="M7 7h.01M7 17h.01"/>',
+play:'<path d="M6 4l14 8-14 8z"/>',
+stop:'<rect x="5" y="5" width="14" height="14" rx="1"/>',
+gps:'<circle cx="12" cy="12" r="7"/><path d="M12 2v4M12 18v4M2 12h4M18 12h4"/>',
+chev:'<path d="M6 9l6 6 6-6"/>',
+help:'<circle cx="12" cy="12" r="9"/><path d="M9.5 9a2.5 2.5 0 1 1 3.5 2.3c-.7.4-1 1-1 1.7M12 17h.01"/>',
+info:'<circle cx="12" cy="12" r="9"/><path d="M12 11v5M12 8h.01"/>',
+ban:'<circle cx="12" cy="12" r="9"/><path d="M5.6 5.6l12.8 12.8"/>',
+sliders:'<path d="M4 6h10M18 6h2M4 12h4M12 12h8M4 18h12M20 18h0"/><circle cx="16" cy="6" r="2"/><circle cx="10" cy="12" r="2"/><circle cx="18" cy="18" r="2"/>',
+camera:'<path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/>',
+boat:'<path d="M3 15l2 5h14l2-5z"/><path d="M12 3v12M12 4l6 8h-6"/>',
+refresh:'<path d="M20 11a8 8 0 0 0-14-4L4 9M4 4v5h5M4 13a8 8 0 0 0 14 4l2-2M20 20v-5h-5"/>',
+warn:'<path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18h.01"/>',
+cloud:'<path d="M7 18a4.5 4.5 0 0 1-.5-9A6 6 0 0 1 18 9.5 4 4 0 0 1 17 18z"/>',
+db:'<ellipse cx="12" cy="5" rx="8" ry="3"/><path d="M4 5v14c0 1.7 3.6 3 8 3s8-1.3 8-3V5M4 12c0 1.7 3.6 3 8 3s8-1.3 8-3"/>',
+water:'<path d="M2 12c3 0 3-2 5-2s2 2 5 2 3-2 5-2 2 2 5 2M2 18c3 0 3-2 5-2s2 2 5 2 3-2 5-2 2 2 5 2M2 6c3 0 3-2 5-2s2 2 5 2 3-2 5-2 2 2 5 2"/>',
+food:'<path d="M6 3v8a2 2 0 0 0 2 2v8M10 3v8M8 3v6M17 3c-2 1-3 4-3 8h3v10"/>',
+med:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M12 8v8M8 12h8"/>'
+};
+const ic=(n,s=18)=>`<svg class="ic" width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${IC[n]||''}</svg>`;
+
+/* ---------- Tamil dictionary (UI language selector) ---------- */
+const TA={'Dashboard':'முகப்பு','Live Map':'நேரடி வரைபடம்','Risk Analysis':'அபாய பகுப்பாய்வு','XAI Analysis':'AI விளக்கம்','Evacuation':'வெளியேற்றம்','Shelters':'நிவாரண முகாம்கள்','Alerts':'எச்சரிக்கைகள்','Citizen Reports':'குடிமக்கள் புகார்கள்','Rescue Teams':'மீட்புக் குழுக்கள்','Offline Mode':'இணையமில்லா முறை','System Status':'கணினி நிலை','Settings':'அமைப்புகள்','Citizen View':'குடிமக்கள் பார்வை',
+'HIGH FLOOD RISK':'வெள்ள அபாயம் அதிகம்','EVACUATE NOW':'உடனடியாக வெளியேறவும்','SAFE ROUTE':'பாதுகாப்பான பாதை','NEAREST SHELTER':'அருகிலுள்ள நிவாரண முகாம்','Why?':'ஏன்?','Send alert':'எச்சரிக்கை அனுப்பு','Evacuation window':'வெளியேற்ற நேரம்','Predicted flood peak':'வெள்ள உச்ச நேரம்','Start safe route':'பாதுகாப்பான பாதையைத் தொடங்கு','Find shelter':'முகாமைக் கண்டறி','Send SOS':'SOS அனுப்பு','Report flood':'வெள்ளத்தைப் புகாரளி','Navigate to safety':'பாதுகாப்பிற்குச் செல்','Emergency overview':'அவசர நிலை மேலோட்டம்','High-risk wards':'அதிக ஆபத்துள்ள வார்டுகள்','Critical wards':'மிக ஆபத்தான வார்டுகள்','Avg. evacuation lead time':'சராசரி வெளியேற்ற அவகாசம்','Home':'முகப்பு','Route':'பாதை','Shelter':'முகாம்','Report':'புகார்','SOS':'SOS'};
+const t=k=>(S.lang==='ta'&&TA[k])?TA[k]:k;
+const tamil=k=>TA[k]?`<span class="ta">${TA[k]}</span>`:'';
+
+/* =====================================================================
+   DATA LAYER  (mock). Replace API.* with real FastAPI calls.
+   ===================================================================== */
+const STAGES=[{n:'Normal',ta:'இயல்பு'},{n:'Warning',ta:'எச்சரிக்கை'},{n:'High risk',ta:'அதிக அபாயம்'},{n:'Critical',ta:'மிக ஆபத்து'}];
+const LEAD=[null,180,105,40];          // minutes to predicted flood peak
+const SIM=[750,785,825,890];           // simulated clock (min after midnight): 12:30, 13:05, 13:45, 14:50
+const CUR_RAIN=[6,22,48,71];           // mm/hr (illustrative)
+const ANTE=[34,96,168,214];            // 72h antecedent rain, mm
+const CONF=[91,78,82,87];              // model confidence %
+const BASE={score:[18,52,82,94],rain:[22,58,85,96],slope:[68,69,70,71],soil:[28,55,78,91]};
+const LV=[
+ {key:'safe',min:0,name:'SAFE',ta:'பாதுகாப்பு',icon:'shield',col:'#1E8E4E'},
+ {key:'watch',min:25,name:'WATCH',ta:'கவனம்',icon:'eye',col:'#E2B400'},
+ {key:'warn',min:50,name:'WARNING',ta:'எச்சரிக்கை',icon:'tri',col:'#E8710A'},
+ {key:'high',min:70,name:'HIGH RISK',ta:'வெள்ள அபாயம் அதிகம்',icon:'oct',col:'#D62828'},
+ {key:'crit',min:88,name:'CRITICAL',ta:'மிக ஆபத்து',icon:'siren',col:'#7A0C14'}];
+const lvl=s=>[...LV].reverse().find(l=>s>=l.min);
+const WARDS=[
+{id:1,loc:'Ketti Upper',k:.55,x:110,y:90,deg:14,elev:1980},{id:2,loc:'Lovedale',k:.62,x:270,y:70,deg:16,elev:2140},
+{id:3,loc:'Kotagiri North',k:.9,x:430,y:80,deg:24,elev:1830},{id:4,loc:'Kodanad',k:.95,x:600,y:90,deg:27,elev:1740},
+{id:5,loc:'Aravenu',k:.88,x:770,y:80,deg:22,elev:1690},{id:6,loc:'Naduvattam',k:.72,x:910,y:160,deg:20,elev:1900},
+{id:7,loc:'Kil Kundah',k:1.1,x:150,y:230,deg:30,elev:1520},{id:8,loc:'Coonoor West',k:.97,x:310,y:200,deg:26,elev:1610},
+{id:9,loc:'Burliar Ridge',k:.9,x:470,y:190,deg:25,elev:1480},{id:10,loc:'Kallar Gorge',k:1.12,x:640,y:210,deg:33,elev:1210},
+{id:11,loc:'Hulikal',k:.92,x:820,y:270,deg:23,elev:1350},{id:12,loc:'Kundah Valley',k:1,x:440,y:340,deg:32,elev:1120},
+{id:13,loc:'Bhavani Bank',k:1.15,x:620,y:370,deg:29,elev:980},{id:14,loc:'Sholur',k:.86,x:800,y:430,deg:21,elev:1560},
+{id:15,loc:'Kotagiri South',k:.5,x:120,y:390,deg:12,elev:2050},{id:16,loc:'Mettupalayam Ghat',k:1.2,x:280,y:440,deg:31,elev:870}];
+const SHELTERS=[
+{id:'A',name:'Relief Shelter A',ta:'நிவாரண முகாம் A',site:'Govt. Higher Secondary School',x:600,y:505,dist:2.4,min:28,cap:500,occ:[40,120,320,455],water:'OK',food:'OK',med:'First-aid + ambulance',phone:'+91 99XXX XX101'},
+{id:'B',name:'Relief Shelter B',ta:'நிவாரண முகாம் B',site:'Panchayat Community Hall',x:250,y:150,dist:2.9,min:34,cap:300,occ:[10,60,281,296],water:'OK',food:'LIMITED',med:'None on site',phone:'+91 99XXX XX102'},
+{id:'C',name:'Relief Shelter C',ta:'நிவாரண முகாம் C',site:'District Sports Complex',x:830,y:180,dist:3.4,min:40,cap:800,occ:[0,30,150,410],water:'OK',food:'OK',med:'Doctor on call',phone:'+91 99XXX XX103'},
+{id:'D',name:'Relief Shelter D',ta:'நிவாரண முகாம் D',site:'Temple Marriage Hall',x:170,y:320,dist:2.0,min:23,cap:250,occ:[0,0,0,60],water:'OK',food:'OK',med:'None on site',phone:'+91 99XXX XX104'},
+{id:'E',name:'Relief Shelter E',ta:'நிவாரண முகாம் E',site:'Higher Secondary School (East)',x:880,y:500,dist:3.1,min:36,cap:400,occ:[5,20,40,140],water:'OK',food:'OK',med:'First-aid',phone:'+91 99XXX XX105'}];
+const HAZ=[
+{id:'culvert',x:530,y:421,name:'Low-lying culvert',short:'Low culvert',ta:'தாழ்வான குழாய்ப்பாலம்',st:['open','caution','blocked','blocked']},
+{id:'bridge1',x:445,y:316,name:'Bridge 1 (river crossing)',short:'Flooded bridge',ta:'வெள்ளம் சூழ்ந்த பாலம்',st:['open','open','caution','blocked']},
+{id:'lowroad',x:663,y:425,name:'Low-lying road section',short:'Low road',ta:'தாழ்வான சாலை',st:['open','caution','caution','blocked']}];
+const TEAMS0=[
+{id:'R-07',ward:12,x:470,y:312,status:'ACTIVE',boats:2,ppl:6,eq:'Inflatable boats, life jackets, medical kit',comm:'2G GSM',data:false},
+{id:'R-03',ward:13,x:640,y:338,status:'EN ROUTE',boats:1,ppl:5,eq:'Rope kit, stretcher, VHF radio',comm:'4G data',data:true},
+{id:'R-11',ward:8,x:335,y:252,status:'STANDBY',boats:0,ppl:8,eq:'Cutting tools, hydraulic jack',comm:'VHF radio',data:false},
+{id:'R-02',ward:10,x:705,y:232,status:'ACTIVE',boats:3,ppl:9,eq:'Boats, drone, floodlights',comm:'4G data',data:true}];
+const REPORTS0=[
+{id:1,type:'Rising water',sev:'High',loc:'Ward 12 · Kundah Valley',desc:'Water crossing the approach of the low bridge.',ago:8,x:410,y:335,v:false,src:'Citizen',min:2},
+{id:2,type:'Flooded road',sev:'Medium',loc:'Ward 13 · Bhavani Bank',desc:'About 20 cm of water on the market road.',ago:15,x:650,y:388,v:true,src:'Field team R-03',min:2},
+{id:3,type:'Rescue requirement',sev:'High',loc:'Ward 16 · Mettupalayam Ghat',desc:'Two elderly residents cannot leave a ground-floor house.',ago:4,x:300,y:455,v:false,src:'Citizen',min:3},
+{id:4,type:'Shelter issue',sev:'Medium',loc:'Shelter B',desc:'Drinking water running low.',ago:22,x:262,y:170,v:false,src:'Shelter manager',min:2}];
+const SVC_LAST_SYNC='06:42 AM';
+
+/* the JSON contract the UI consumes — swap for fetch('/api/v1/...') */
+function wd(w,st=S.stage){
+  const cl=v=>clamp(Math.round(v),0,99);
+  const score=cl(BASE.score[st]*w.k),rain=cl(BASE.rain[st]*(.7+.3*w.k)),slope=cl(BASE.slope[st]*w.deg/32),soil=cl(BASE.soil[st]*(.6+.4*w.k));
+  const off=(((w.id+1)%3)-1)*5, lead=LEAD[st]==null?null:LEAD[st]+off;
+  const near=[...SHELTERS].filter(s=>s.id!=='D').sort((a,b)=>Math.hypot(a.x-w.x,a.y-w.y)-Math.hypot(b.x-w.x,b.y-w.y))[0];
+  return {ward:'Ward '+w.id,id:w.id,locality:w.loc,risk_score:score,risk_level:lvl(score).name,
+    rainfall_intensity:rain,slope_instability:slope,soil_saturation:soil,
+    lead_time_minutes:lead,peak_time:lead==null?null:f12(SIM[st]+lead),
+    road_status:score<50?'OPEN':score<70?'CAUTION':score<88?'WARNING':'BLOCKED',
+    nearest_shelter:w.id===12?'Shelter A':'Shelter '+near.id,confidence:CONF[st],
+    rain_mm_hr:Math.round(CUR_RAIN[st]*(.7+.3*w.k)),antecedent_mm:Math.round(ANTE[st]*(.6+.4*w.k)),
+    slope_deg:w.deg,elevation_m:w.elev,pop:4200+(w.id*137%900)};
+}
+const API={
+  allWards:()=>WARDS.map(w=>wd(w)),
+  ward:id=>wd(WARDS.find(w=>w.id===+id)),
+  // GET /api/v1/wards  →  [{ward, risk_score, risk_level, rainfall_intensity, slope_instability, soil_saturation, lead_time_minutes, peak_time, road_status, nearest_shelter}]
+};
+const hazState=(h,st=S.stage)=>h.st[st];
+const shStatus=s=>{const occ=s.occ[S.stage];if(s.id==='D'&&S.stage<3)return{k:'STANDBY',lv:'watch',ic:'clock'};const a=s.cap-occ;if(a<=0)return{k:'FULL',lv:'crit',ic:'ban'};if(occ/s.cap>.9)return{k:'NEARLY FULL',lv:'warn',ic:'tri'};return{k:'OPEN',lv:'safe',ic:'check'}};
+
+/* =====================================================================
+   STATE
+   ===================================================================== */
+const S={
+  loggedIn:false,role:'Emergency Officer',user:'officer.tn01',view:'dashboard',lang:'en',stage:0,online:true,
+  ward:12,shelter:'A',routeAlt:false,alertSent:null,faults:{weather:false,ml:false,gps:false},
+  secs:0,sim:SIM[0]*60,drawer:null,modal:null,xo:{rain:true},navOpen:false,bell:false,
+  layers:{river:1,roads:1,wards:1,shelters:1,teams:1,reports:1,hazards:1},mz:1,mc:[500,310],mapMode:'risk',
+  teams:JSON.parse(JSON.stringify(TEAMS0)),reports:JSON.parse(JSON.stringify(REPORTS0)),
+  alertLog:[{t:'06:42 AM',ward:'All wards',lv:'ADVISORY',ch:'SMS',n:12400,note:'Daily preparedness advisory'}],
+  af:{ward:'12',lang:'both',ch:{sms:1,wa:1,gsm:1}},
+  sos:null,sosLog:[{id:'R-04',t:'13:12',raw:'SOS #LOC:11.39,76.83 #NEED:MEDICAL_1 #ROAD:OPEN',note:'Sample incoming SOS (2G GSM)'}],sosLoc:'11.42,76.86',
+  notes:[],dockOpen:true,auto:null,syncing:false,lastSync:SVC_LAST_SYNC,ctab:'home',navStarted:false,large:false,rSort:'score',rf:{}
+};
+const mlDown=()=>S.faults.ml;
+function setStage(n,silent){
+  S.stage=n;S.secs=LEAD[n]!=null?LEAD[n]*60:0;S.sim=SIM[n]*60;
+  if(n<2)S.routeAlt=false;
+  if(n===0){S.alertSent=null;S.notes=[];S.navStarted=false}
+  const msg=[null,'Rainfall rising. Ward 12 moved to WARNING (52%).','AI update: Ward 12 is HIGH RISK (82%). Evacuation window 1h 45m.','CRITICAL: Ward 12 at 94%. Evacuate now.'][n];
+  if(msg){S.notes.unshift({m:msg,lv:n});if(!silent)toast(msg)}
+  render();
+}
+
+/* =====================================================================
+   SHARED UI HELPERS
+   ===================================================================== */
+const badge=(score,o={})=>{const l=lvl(score);return `<span class="rb lv-${l.key}${o.solid?' solid':''}${o.lg?' lg':''}">${ic(l.icon,o.lg?22:16)}<b>${l.name}</b>${o.noscore?'':`<span class="n">${score}%</span>`}</span>`};
+const CH={measured:['MEASURED','Sensor or gauge reading'],forecast:['FORECAST','Nowcast model output'],ai:['AI PREDICTION','Machine-learning model output'],xai:['EXPLANATION','Why the model decided this'],terrain:['TERRAIN DATA','Static DEM / GIS layer'],est:['ESTIMATED','Derived from antecedent rainfall']};
+const chip=k=>`<span class="chip c-${k}" title="${CH[k][1]}">${CH[k][0]}</span>`;
+const btn=(label,act,o={})=>`<button class="btn ${o.cls||''}" data-act="${act}"${o.id!=null?` data-id="${o.id}"`:''}${o.dis?' disabled':''}${o.aria?` aria-label="${esc(o.aria)}"`:''}>${o.icon?ic(o.icon,o.is||18):''}${label}</button>`;
+const whyBtn=id=>`<button class="btn why" data-act="why" data-id="${id}" aria-label="Why is Ward ${id} at this risk level?">${ic('help',16)}${t('Why?')}</button>`;
+const pageHead=(title,sub,right='')=>`<div class="pgh"><div><h1>${title}</h1>${sub?`<p>${sub}</p>`:''}</div><div class="r">${right}</div></div>`;
+const card=(title,body,o={})=>`<section class="card ${o.cls||''}"${o.id?` id="${o.id}"`:''}><header><h2>${title}</h2>${o.right?`<div class="r">${o.right}</div>`:''}</header><div class="${o.nobody?'':'body'}">${body}</div></section>`;
+function toast(m){const e=document.createElement('div');e.className='toast';e.textContent=m;$('#toasts').appendChild(e);setTimeout(()=>e.remove(),4200)}
+const selWard=()=>API.ward(S.ward);
+const wardOpt=(v)=>WARDS.map(w=>`<option value="${w.id}"${+v===w.id?' selected':''}>Ward ${w.id} — ${w.loc}</option>`).join('');
+function cdBlock(w,o={}){
+  const l=lvl(w.risk_score);
+  if(w.lead_time_minutes==null)return `<div class="cd lv-safe"><div class="cl">${t('Evacuation window')}</div><div class="cn">— : — : —</div><div>No flood peak predicted in the next 6 hours.</div></div>`;
+  const off=w.lead_time_minutes-LEAD[S.stage];
+  return `<div class="cd lv-${l.key}" role="timer" aria-label="Evacuation window countdown"><div class="cl">${t('Evacuation window')} ${S.lang==='en'?'<span class="ta" style="font-weight:600">· வெளியேற்ற நேரம்</span>':''}</div><div class="cn" data-cd="1" data-off="${off}" data-f="hms">${fHMS(Math.max(0,S.secs+off*60))}</div><div>${t('Predicted flood peak')}: <b class="num" style="font-size:1.3rem">${w.peak_time}</b></div></div>`;
+}
+
+/* =====================================================================
+   MAP (stylised SVG GIS — works offline, no remote tiles)
+   ===================================================================== */
+function rng(seed){return function(){seed|=0;seed=seed+0x6D2B79F5|0;let t=Math.imul(seed^seed>>>15,1|seed);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+function blob(cx,cy,r,seed,n=12,j=.15){const R=rng(seed),p=[];for(let i=0;i<n;i++){const a=i/n*Math.PI*2,rr=r*(1-j+R()*2*j);p.push([cx+Math.cos(a)*rr,cy+Math.sin(a)*rr*.86])}
+  const m=(a,b)=>[(a[0]+b[0])/2,(a[1]+b[1])/2],f=v=>v.toFixed(1);let d='M'+m(p[0],p[1]).map(f).join(' ');
+  for(let i=1;i<=n;i++){const c=p[i%n],e=m(p[i%n],p[(i+1)%n]);d+=`Q${f(c[0])} ${f(c[1])} ${f(e[0])} ${f(e[1])}`}return d+'Z'}
+const RIVER='M-10 140 C130 190 220 260 330 300 C420 332 470 300 560 330 C660 365 720 470 830 500 S980 560 1010 560';
+const TRIB='M640 -10 C610 90 650 190 600 270 S575 315 566 331';
+const ROADS=[
+ ['M40 430 C200 405 330 385 445 316 S700 250 1000 232',true],
+ ['M300 470 C420 440 520 410 620 420 S800 450 960 400',true],
+ ['M0 250 C120 230 200 250 300 210 S420 150 470 190',false],['M470 190 C560 130 620 130 690 100 S800 130 900 160',false],
+ ['M445 316 C450 250 470 220 470 190',false],['M620 420 C620 470 600 490 600 505',false],['M120 90 C180 140 240 130 300 200',false],['M760 90 C780 180 800 220 820 270',false]];
+const PEAKS=[[240,110,150],[830,110,130],[130,470,140],[590,535,110],[910,470,90],[620,230,80]];
+const SAFE_A='M455 352 C385 400 380 510 470 548 S570 522 600 505';
+const BLOCK_A='M455 352 C480 385 510 410 530 421 S585 470 600 505';
+const TERRAIN=(()=>{let s='<rect x="-50" y="-50" width="1100" height="720" fill="#dfe6d3"/><ellipse cx="500" cy="330" rx="620" ry="420" fill="#e9eddc" opacity=".6"/>';
+  PEAKS.forEach((p,pi)=>{for(let k=0;k<6;k++){s+=`<path d="${blob(p[0],p[1],p[2]*(1-k*.16),pi*31+k*7,14,.12)}" fill="#8a7f5a" fill-opacity=".055" stroke="#a3af8f" stroke-width="${k%3===0?1.3:.6}"/>`}});
+  s+='<text x="240" y="118" text-anchor="middle" font-size="12" font-weight="600" fill="#6b6a4c" style="stroke-width:2.5px">2,140 m</text><text x="830" y="118" text-anchor="middle" font-size="12" font-weight="600" fill="#6b6a4c" style="stroke-width:2.5px">1,900 m</text>';return s})();
+const BRAND_CONTOURS=(()=>{let s='';[[200,180,220],[700,520,260],[900,120,180]].forEach((p,pi)=>{for(let k=0;k<9;k++)s+=`<path d="${blob(p[0],p[1],p[2]*(1-k*.1),pi*17+k,14,.13)}" fill="none" stroke="rgba(255,255,255,${.06+k*.012})" stroke-width="1.2"/>`});return s})();
+
+function hazMark(h,state){
+  const c=state==='blocked'?'#D62828':state==='caution'?'#E8710A':'#1E8E4E';
+  const g=state==='blocked'?`<circle r="13" fill="${c}" stroke="#fff" stroke-width="3"/><path d="M-5-5L5 5M5-5L-5 5" stroke="#fff" stroke-width="3" stroke-linecap="round"/>`
+   :state==='caution'?`<polygon points="0,-15 15,12 -15,12" fill="${c}" stroke="#fff" stroke-width="3" stroke-linejoin="round"/><path d="M0-5V3M0 8h.01" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/>`
+   :`<circle r="11" fill="${c}" stroke="#fff" stroke-width="3"/><path d="M-4.5 0l3 3 6-6" stroke="#fff" stroke-width="2.6" fill="none" stroke-linecap="round"/>`;
+  return `<g transform="translate(${h.x} ${h.y})" class="${state==='blocked'?'pulse':''}"><title>${h.name}: ${state}</title>${g}<text y="32" text-anchor="middle" class="ml">${h.short} · ${state.toUpperCase()}</text></g>`;
+}
+function mapView(o={}){
+  const evac=o.mode==='evac',st=S.stage,L=S.layers,ml=mlDown();
+  const z=o.small?1:S.mz,W=1000/z,H=620/z;
+  const cx=clamp(S.mc[0],W/2,1000-W/2),cy=clamp(S.mc[1],H/2,620-H/2),vx=cx-W/2,vy=cy-H/2;
+  let s=`<svg class="map" viewBox="${vx.toFixed(0)} ${vy.toFixed(0)} ${W.toFixed(0)} ${H.toFixed(0)}" role="group" aria-label="${evac?'Evacuation route map':'Flood risk map'} of the demo hill district">`+TERRAIN;
+  const fw=[0,16,38,62][st];
+  if(L.river){
+    if(fw&&!ml)s+=`<path class="flood" d="${RIVER}" fill="none" stroke="#3B82F6" stroke-opacity=".3" stroke-width="${fw}" stroke-linecap="round"/><path class="flood" d="${TRIB}" fill="none" stroke="#3B82F6" stroke-opacity=".3" stroke-width="${fw*.6}" stroke-linecap="round"/>`;
+    s+=`<path d="${TRIB}" fill="none" stroke="#8DBDE8" stroke-width="7" stroke-linecap="round"/><path d="${TRIB}" fill="none" stroke="#4A90D9" stroke-width="4" stroke-linecap="round"/><path d="${RIVER}" fill="none" stroke="#8DBDE8" stroke-width="13" stroke-linecap="round"/><path d="${RIVER}" fill="none" stroke="#4A90D9" stroke-width="7" stroke-linecap="round"/><text x="700" y="424" class="tl" transform="rotate(35 700 424)" style="stroke-width:3px">Bhavani River</text>`;
+  }
+  if(L.wards){
+    [...WARDS].sort((a,b)=>(a.id===S.ward)-(b.id===S.ward)).forEach(w=>{
+      const d=wd(w),l=lvl(d.risk_score),sel=S.ward===w.id,idx=LV.indexOf(l),path=blob(w.x,w.y,66,w.id*13+5,9,.14);
+      const fill=ml?'#8a93a2':l.col,op=ml?.25:[.16,.3,.38,.46,.56][idx]*(evac?.7:1);
+      s+=`<g class="wd" data-act="ward" data-id="${w.id}" tabindex="0" role="button" aria-label="Ward ${w.id} ${w.loc}: ${ml?'prediction unavailable':l.name+', '+d.risk_score+' percent'}"><path d="${path}" fill="${fill}" fill-opacity="${op}" stroke="${sel?'#0B1F3A':fill}" stroke-width="${sel?4.5:1.8}" ${sel?'stroke-dasharray="11 5"':''}/>`;
+      const pat=ml?null:[null,null,'url(#hWarn)','url(#hHigh)','url(#hCrit)'][idx];if(pat)s+=`<path d="${path}" fill="${pat}" pointer-events="none"/>`;
+      s+=`<text x="${w.x}" y="${w.y-2}" text-anchor="middle" class="wl">W${w.id}</text><text x="${w.x}" y="${w.y+15}" text-anchor="middle" class="ws">${ml?'?':d.risk_score+'%'}</text></g>`;
+    });
+  }
+  if(L.roads)ROADS.forEach(r=>{s+=`<path d="${r[0]}" fill="none" stroke="#7c7a6a" stroke-width="${r[1]?6:4}" stroke-linecap="round"/><path d="${r[0]}" fill="none" stroke="${r[1]?'#F7C86B':'#fff'}" stroke-width="${r[1]?3.6:2.2}" stroke-linecap="round"/>`});
+  if(L.roads){s+=`<g><rect x="437" y="309" width="16" height="14" rx="2" fill="#fff" stroke="#5b6472" stroke-width="2" transform="rotate(-30 445 316)"/><text x="415" y="300" class="ml">Bridge 1</text><rect x="290" y="280" width="16" height="14" rx="2" fill="#fff" stroke="#1E8E4E" stroke-width="2.5" transform="rotate(-30 298 287)"/><text x="262" y="272" class="ml">Bridge 2 (elevated)</text></g>`}
+  /* routes */
+  const sh=SHELTERS.find(x=>x.id===S.shelter),start=[455,352];
+  if(evac){
+    const cas=(d,w)=>`<path d="${d}" fill="none" stroke="#fff" stroke-width="${w+5}" stroke-linecap="round" stroke-linejoin="round"/>`;
+    if(sh.id==='A'){
+      if(st<2){s+=cas(BLOCK_A,7)+`<path d="${BLOCK_A}" fill="none" stroke="${st===1?'#E8710A':'#1E8E4E'}" stroke-width="7" stroke-linecap="round" ${st===1?'stroke-dasharray="14 8"':''}/>`}
+      else{
+        s+=cas(BLOCK_A,6)+`<path d="${BLOCK_A}" fill="none" stroke="#D62828" stroke-width="6" stroke-dasharray="10 8" stroke-linecap="round"/>`;
+        if(S.routeAlt)s+=cas(SAFE_A,8)+`<path class="flow" d="${SAFE_A}" fill="none" stroke="#1E8E4E" stroke-width="8" stroke-linecap="round"/>`;
+      }
+    }else{
+      const mx=(start[0]+sh.x)/2,my=(start[1]+sh.y)/2,dx=sh.x-start[0],dy=sh.y-start[1],len=Math.hypot(dx,dy)||1;
+      const d=`M${start[0]} ${start[1]} Q${(mx-dy/len*70).toFixed(0)} ${(my+dx/len*70).toFixed(0)} ${sh.x} ${sh.y}`;
+      s+=cas(d,8)+`<path class="flow" d="${d}" fill="none" stroke="#1E8E4E" stroke-width="8" stroke-linecap="round"/>`;
+    }
+  }
+  if(L.hazards&&st>=1)HAZ.forEach(h=>{const stt=hazState(h);if(stt!=='open'||evac)s+=hazMark(h,stt)});
+  if(L.shelters)SHELTERS.forEach(x=>{const on=evac&&x.id===S.shelter,ss=shStatus(x);
+    s+=`<g transform="translate(${x.x} ${x.y})" data-act="shelterPick" data-id="${x.id}" tabindex="0" role="button" aria-label="${x.name}, ${ss.k}"><title>${x.name} — ${ss.k}</title>${on?'<circle r="26" fill="none" stroke="#1E8E4E" stroke-width="4" class="ring"/>':''}<rect x="-14" y="-14" width="28" height="28" rx="4" fill="#fff" stroke="${ss.k==='OPEN'?'#0B1F3A':ss.lv==='safe'?'#0B1F3A':'#7C0A14'}" stroke-width="${on?4:2.6}"/><path d="M-8 1L0-7l8 8M-6 0v8h12V0" fill="none" stroke="#0B1F3A" stroke-width="2.2" stroke-linejoin="round"/><text y="30" text-anchor="middle" class="ml">Shelter ${x.id}</text></g>`});
+  if(L.teams)S.teams.forEach(x=>{s+=`<g transform="translate(${x.x} ${x.y})"><title>Rescue team ${x.id} — ${x.status}</title><circle r="12" fill="#1A63C7" stroke="#fff" stroke-width="2.5"/><path d="M0-5.5v11M-5.5 0h11" stroke="#fff" stroke-width="2.6"/><text y="27" text-anchor="middle" class="ml">${x.id}</text></g>`});
+  if(L.reports)S.reports.filter(r=>r.min<=st||r.mine).forEach(r=>{s+=`<g transform="translate(${r.x} ${r.y})"><title>Report: ${esc(r.type)} (${r.sev})</title><rect x="-8" y="-8" width="16" height="16" transform="rotate(45)" fill="#fff" stroke="#C25200" stroke-width="2.6"/><text y="4.5" text-anchor="middle" font-size="12" font-weight="700" style="stroke-width:0;fill:#C25200">!</text></g>`});
+  if(evac||o.you){s+=`<g transform="translate(${start[0]} ${start[1]})"><circle r="10" fill="#1A63C7" opacity=".45" class="ring"/><path d="M0 0c-9-11-9-21 0-21s9 10 0 21z" transform="translate(0 6)" fill="#0B1F3A" stroke="#fff" stroke-width="2"/><circle cy="-8" r="3.5" fill="#fff"/><text y="20" text-anchor="middle" class="ml" style="font-size:12.5px">YOU ARE HERE</text></g>`}
+  s+=`<g transform="translate(${vx+18} ${vy+H-22}) scale(${1/z})"><rect x="0" y="0" width="150" height="6" fill="#0B1F3A" stroke="#fff" stroke-width="1.5"/><text x="0" y="-5" style="font-size:12px;font-weight:700">1 km</text></g><g transform="translate(${vx+W-26} ${vy+H-44}) scale(${1/z})"><path d="M0-16L7 4H-7z" fill="#0B1F3A" stroke="#fff" stroke-width="2"/><text y="18" text-anchor="middle" style="font-size:12px;font-weight:700">N</text></g>`;
+  s+='</svg>';
+  const stale=!S.online||S.faults.weather;
+  const ctl=o.small?'':`<div class="mapctl"><button data-act="zoom" data-id="1" aria-label="Zoom in">${ic('x',0)}<b style="font-size:1.2rem">+</b></button><button data-act="zoom" data-id="-1" aria-label="Zoom out"><b style="font-size:1.4rem">−</b></button><button data-act="zoom" data-id="0" aria-label="Reset map view">${ic('refresh',16)}</button><button data-act="zoomWard" aria-label="Zoom to selected ward">${ic('gps',18)}</button></div>`;
+  return `<div class="mapwrap">${s}<div class="livechip${stale?' stale':''}"><span class="dot"></span>${stale?'CACHED · last sync '+S.lastSync:'LIVE · <span data-clock="1">'+fClock(S.sim)+'</span>'}${o.mode==='evac'?' · EVACUATION MODE':''}</div>${ctl}</div>`;
+}
+function legend(evac){
+  const sw=(l,i)=>{const pat=[null,null,'url(#hWarn)','url(#hHigh)','url(#hCrit)'][i];return `<span><svg width="20" height="20" aria-hidden="true"><rect width="20" height="20" fill="${l.col}" fill-opacity=".55"/>${pat?`<rect width="20" height="20" fill="${pat}"/>`:''}</svg>${l.name}${l.key==='safe'?' (Green)':l.key==='watch'?' (Yellow)':l.key==='warn'?' (Orange)':l.key==='high'?' (Red)':' (Dark red)'}</span>`};
+  return `<div class="legend" aria-label="Map legend">${LV.map(sw).join('')}</div><div class="legend"><span>${ic('home',16)} Shelter</span><span><svg width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#1A63C7"/><path d="M10 5v10M5 10h10" stroke="#fff" stroke-width="2.4"/></svg> Rescue team</span><span><svg width="20" height="20" aria-hidden="true"><polygon points="10,2 19,18 1,18" fill="#E8710A"/></svg> Caution road</span><span><svg width="20" height="20" aria-hidden="true"><circle cx="10" cy="10" r="9" fill="#D62828"/><path d="M6 6l8 8M14 6l-8 8" stroke="#fff" stroke-width="2.4"/></svg> Blocked road</span><span><svg width="20" height="20" aria-hidden="true"><rect x="4" y="4" width="12" height="12" transform="rotate(45 10 10)" fill="#fff" stroke="#C25200" stroke-width="2"/></svg> Citizen / field report</span>${evac?'<span><svg width="30" height="10" aria-hidden="true"><path d="M0 5h30" stroke="#1E8E4E" stroke-width="5"/></svg> Safe route</span><span><svg width="30" height="10" aria-hidden="true"><path d="M0 5h30" stroke="#D62828" stroke-width="5" stroke-dasharray="6 4"/></svg> Blocked route</span>':''}</div>`;
+}
+function layersBar(){return `<div class="layers" role="group" aria-label="Map layers">${[['river','Rivers'],['roads','Roads & bridges'],['wards','Wards'],['hazards','Hazards'],['shelters','Shelters'],['teams','Rescue teams'],['reports','Reports']].map(([k,n])=>`<label><input type="checkbox" data-chg="layer" data-id="${k}"${S.layers[k]?' checked':''}>${n}</label>`).join('')}</div>`}
+
+/* =====================================================================
+   XAI
+   ===================================================================== */
+function factors(w){
+  const sat=w.soil_saturation>=70?'High':w.soil_saturation>=40?'Moderate':'Low',ter=w.slope_deg>=25?'Steep':w.slope_deg>=15?'Moderate':'Gentle';
+  const con=v=>v>=75?'High':v>=50?'Moderate':'Low';
+  return [
+   {k:'rain',name:'Rainfall Intensity',ta:'மழைத் தீவிரம்',v:w.rainfall_intensity,ic:'drop',
+    rows:[['Current',`${w.rain_mm_hr} mm/hr`],['Forecast',['Steady','Increasing','Increasing','Peaking'][S.stage]],['Contribution',con(w.rainfall_intensity)]],
+    ex:w.rainfall_intensity>=60?'Rainfall intensity is significantly increasing predicted runoff.':'Rainfall intensity is low, so predicted runoff is limited.',
+    hum:w.rainfall_intensity>=60?'High rainfall intensity is currently increasing flood risk.':w.rainfall_intensity>=40?'Rainfall intensity is rising and adding to flood risk.':'Rainfall intensity is currently low.'},
+   {k:'slope',name:'Slope Instability',ta:'சரிவு நிலையின்மை',v:w.slope_instability,ic:'mountain',
+    rows:[['Slope',`${w.slope_deg}°`],['Terrain',ter],['Contribution',con(w.slope_instability)]],
+    ex:w.slope_deg>=25?'Steep terrain can accelerate surface-water movement.':'Gentler terrain slows surface-water movement.',
+    hum:w.slope_deg>=25?'The steep terrain increases rapid surface-water movement.':'The terrain slope adds only moderately to runoff speed.'},
+   {k:'soil',name:'Antecedent Soil Saturation',ta:'மண் ஈரப்பதம்',v:w.soil_saturation,ic:'layers',
+    rows:[['Saturation',sat],['Rain, past 72 h',`${w.antecedent_mm} mm`],['Contribution',con(w.soil_saturation)]],
+    ex:w.soil_saturation>=60?'Highly saturated soil has reduced additional absorption capacity.':'Soil can still absorb additional rainfall.',
+    hum:w.soil_saturation>=60?'The soil is already highly saturated, reducing its ability to absorb additional rainfall.':'The soil can still absorb much of the rainfall.'}];
+}
+const WHYQ={safe:'Why is this area rated safe?',watch:'Why is this area on watch?',warn:'Why is this area at warning level?',high:'Why is this area high risk?',crit:'Why is this area critical?'};
+const ACTION={safe:'Continue monitoring. No action required.',watch:'Verify field sensors and brief rescue teams.',warn:'Pre-position boats, keep Shelter A on standby and prepare the Tamil advisory.',high:'Send the evacuation alert to Ward 12 and open the ridge route to Shelter A.',crit:'EVACUATE NOW. Escalate to district control and dispatch rescue team R-07.'};
+function fourW(w){
+  const l=lvl(w.risk_score),F=factors(w).sort((a,b)=>b.v-a.v);
+  const what=`${w.ward} has ${l.key==='safe'?'normal conditions':l.name+' flood risk'}.`;
+  const why=`${F.map(f=>f.name.toLowerCase().replace('antecedent ','')).join(' + ')} ${l.key==='safe'||l.key==='watch'?'are within normal limits':'are contributing to the prediction'}.`.replace(/^./,c=>c.toUpperCase());
+  const when=w.lead_time_minutes==null?'No flood peak predicted in the next 6 hours.':`Estimated evacuation window: <b>${fHM(w.lead_time_minutes)}</b> · flood peak ${w.peak_time}.`;
+  const where=S.stage>=2?`Safe evacuation route → <b>${w.nearest_shelter}</b>${w.id===12?' (2.4 km)':''}.`:`Routes on standby → ${w.nearest_shelter}.`;
+  return {what,why,when,where};
+}
+function xaiPanel(w,compact){
+  const l=lvl(w.risk_score);
+  if(mlDown())return `<div class="err" role="alert">${ic('ban',22)}<div><b>Risk prediction temporarily unavailable.</b><p class="small">The ML service is not responding. Risk scores and explanations are hidden until it recovers. Use field reports and manual assessment meanwhile.</p></div></div>`;
+  const F=factors(w),rank=[...F].sort((a,b)=>b.v-a.v).map(f=>f.k),rk=['Primary','Secondary','Supporting'],fw=fourW(w);
+  let h=`<div class="xai-h"><span>${chip('ai')}</span>${badge(w.risk_score,{lg:1})}</div>
+  <h3 style="font-family:var(--fd);font-size:1.5rem;line-height:1.1">${fw.what}</h3>
+  <div class="small muted" style="margin-bottom:.8rem">${S.lang==='en'&&l.key==='high'?'<span class="ta">வெள்ள அபாயம் அதிகம்</span> · ':''}Model confidence <b>${w.confidence}%</b></div>
+  <div class="xai-h"><h3>${WHYQ[l.key]}</h3>${chip('xai')}</div>
+  <p class="small muted" style="margin-bottom:.5rem">Share of the risk score explained by each factor. Select a factor for detail.</p>`;
+  F.forEach(f=>{
+    const open=S.xo[f.k],r=rank.indexOf(f.k),n=Math.round(f.v/5);
+    h+=`<div class="fac lv-${lvl(f.v).key}"><button data-act="xo" data-id="${f.k}" aria-expanded="${!!open}" aria-controls="fd-${f.k}">${ic(f.ic,20)}<span class="fn">${f.name} ${S.lang==='en'?`<span class="ta small muted">${f.ta}</span>`:''} <span class="tag">${rk[r]}</span></span><span style="display:flex;gap:.5rem;align-items:center"><span class="fv">${f.v}%</span><span class="chev">${ic('chev')}</span></span><span class="blocks" aria-hidden="true">${Array.from({length:20},(_,i)=>`<i class="${i<n?'f':''}"></i>`).join('')}</span></button>
+    <div class="det" id="fd-${f.k}" role="region" aria-label="${f.name} detail"><dl>${f.rows.map(r=>`<dt>${r[0]}</dt><dd>${r[1]}</dd>`).join('')}</dl><q>“${f.ex}”</q></div></div>`;
+  });
+  h+=`<h4 style="margin:1rem 0 .3rem;font-size:1.05rem">${l.key==='safe'?'Why this area is safe':'Why this area is at risk'} ${chip('xai')}</h4><ul class="expl">${F.map(f=>`<li>${f.hum}</li>`).join('')}</ul>
+  <div class="drivers"><div><small>Primary risk driver</small><b>${F.find(f=>f.k===rank[0]).name}</b></div><div><small>Secondary risk driver</small><b>${F.find(f=>f.k===rank[1]).name.replace('Antecedent ','')}</b></div><div><small>Supporting risk factor</small><b>${F.find(f=>f.k===rank[2]).name}</b></div></div>
+  <div class="drivers" style="grid-template-columns:1fr 1fr;margin-top:.5rem"><div><small>AI confidence</small><b class="num" style="font-size:1.5rem">${w.confidence}%</b></div><div><small>Risk score</small><b class="num" style="font-size:1.5rem">${w.risk_score}%</b></div></div>
+  <div class="act lv-${l.key}" style="margin-top:.9rem"><div class="b">${ic('send',18)} Recommended operational action</div><p>${ACTION[l.key]}</p></div>
+  <dl class="fourw" style="margin:.9rem 0 0;border:1px solid var(--line);border-radius:5px">${[['WHAT','what','நிலை'],['WHY','why','காரணம்'],['WHEN','when','நேரம்'],['WHERE','where','இடம்']].map(r=>`<div class="row"><dt>${r[0]}</dt><dd>${fw[r[1]]}</dd></div>`).join('')}</dl>
+  <p class="note">Values shown are <b>illustrative prototype data</b>, not real-world measurements. In production, measured readings, forecasts, the AI score and the explanation each come from separate API fields and are labelled as above.</p>`;
+  return h;
+}
+function timeline(w){
+  const cur=[0,1,3,4][S.stage],pk=w.lead_time_minutes==null?null:SIM[S.stage]+w.lead_time_minutes;
+  const steps=[['Now',f12(S.sim/60)],['Rainfall increasing',S.stage>=1?f12(SIM[S.stage]):'—'],['Risk increasing',S.stage>=1?f12(SIM[S.stage]):'—'],['Flood surge predicted',pk?f12(pk-25):'—'],['Peak flood',pk?f12(pk):'—'],['Evacuation window closes',pk?f12(pk):'—']];
+  return `<ol class="tlist">${steps.map((s,i)=>{const c=i<cur?'done':i===cur?'cur':'';return `<li class="${c}"><span class="mk">${c==='done'?ic('check',14):c==='cur'?ic('clock',14):''}</span><span>${s[0]}<span class="st">${c==='done'?'Reached':c==='cur'?'In progress':'Pending'}</span></span><span class="tm">${s[1]}</span></li>`}).join('')}</ol>`;
+}
+
+/* rainfall chart */
+function rainChart(){
+  const st=S.stage,cur=CUR_RAIN[st],R=rng(7),past=[];
+  for(let i=0;i<24;i++)past.push(Math.max(0,+(cur*Math.pow((i+1)/24,2.6)*(.8+R()*.4)).toFixed(1)));
+  past[23]=cur;
+  const fc=st===0?[cur,cur,cur]:[cur*1.15,cur*1.22,cur*1.05].map(v=>+v.toFixed(1)),all=past.concat(fc),mx=Math.max(80,...all),w=640,h=180,bw=w/all.length;
+  let s=`<svg viewBox="0 0 ${w+40} ${h+34}" width="100%" role="img" aria-label="Rainfall intensity: last 24 hours measured and next 3 hours forecast. Now ${cur} millimetres per hour."><g transform="translate(34 6)">`;
+  [0,.5,1].forEach(f=>{const y=h-f*h;s+=`<line x1="0" x2="${w}" y1="${y}" y2="${y}" stroke="var(--line)"/><text x="-6" y="${y+4}" text-anchor="end" font-size="11" fill="var(--muted)">${Math.round(f*mx)}</text>`});
+  all.forEach((v,i)=>{const bh=v/mx*h,x=i*bw+1,isF=i>=24;s+=`<rect x="${x}" y="${h-bh}" width="${bw-3}" height="${bh}" ${isF?'fill="none" stroke="var(--blue)" stroke-width="2" stroke-dasharray="4 3"':'fill="var(--navy3)"'}><title>${isF?'Forecast +'+(i-23)+' h':(24-i)+' h ago'}: ${v} mm/hr</title></rect>`});
+  s+=`<text x="0" y="${h+16}" font-size="11" fill="var(--muted)">−24 h</text><text x="${24*bw}" y="${h+16}" text-anchor="middle" font-size="11" font-weight="700" fill="var(--ink)">Now</text><text x="${w}" y="${h+16}" text-anchor="end" font-size="11" fill="var(--blue)">+3 h forecast</text><text x="${w}" y="${h+30}" text-anchor="end" font-size="11" fill="var(--muted)">mm/hr</text></g></svg>`;
+  return s;
+}
+
+/* =====================================================================
+   VIEWS
+   ===================================================================== */
+const VIEWS={};
+const NAV=[['dashboard','dash','Dashboard'],['map','map','Live Map'],['risk','chart','Risk Analysis'],['xai','xai','XAI Analysis'],['evac','route','Evacuation'],['shelters','home','Shelters'],['alerts','bell','Alerts'],['reports','file','Citizen Reports'],['rescue','life','Rescue Teams'],['offline','wifioff','Offline Mode'],['system','server','System Status'],['settings','gear','Settings']];
+
+function logoSvg(){return `<svg viewBox="0 0 32 32" aria-hidden="true"><path d="M16 2l12 4v9c0 7-5 12-12 15C9 27 4 22 4 15V6z" fill="#fff"/><path d="M8 17c2-2.4 4-2.4 6 0s4 2.4 6 0 3-2.4 4-1M8 12c2-2.4 4-2.4 6 0s4 2.4 6 0 3-2.4 4-1" stroke="#0B1F3A" stroke-width="2" fill="none" stroke-linecap="round"/></svg>`}
+
+function loginView(){
+  return `<div class="login"><section class="brand" aria-label="NeerKaval brand"><svg class="bm" viewBox="0 0 1000 620" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${BRAND_CONTOURS}<path d="${RIVER}" fill="none" stroke="rgba(120,180,240,.35)" stroke-width="10"/></svg>
+  <div class="brand-in"><div style="width:52px;margin-bottom:1rem">${logoSvg()}</div><h1 class="wm">NEERKAVAL</h1><p class="wm-ta" lang="ta">நீர் காவல்</p><p class="sub">Flood Intelligence &amp; Emergency Response Platform</p><p class="tag">Predict. Explain. Evacuate. Save Lives.</p></div></section>
+  <section class="loginbox"><div class="lang" role="group" aria-label="Language"><button data-act="lang" data-id="ta" aria-pressed="${S.lang==='ta'}" lang="ta">தமிழ்</button><button data-act="lang" data-id="en" aria-pressed="${S.lang==='en'}">English</button></div>
+  <form id="loginForm" novalidate><h2>Sign in</h2><p class="muted">Emergency control room access</p>
+  <div class="sysok ${S.online?'':'off'}"><span class="dot"></span>System Status: ${S.online?'ONLINE':'OFFLINE (cached mode)'}</div>
+  <label class="f"><span>Username</span><input type="text" id="lu" autocomplete="username" value="officer.tn01"></label>
+  <label class="f"><span>Password</span><input type="password" id="lp" autocomplete="current-password" value="demo1234"></label>
+  <label class="f"><span>Role</span><select id="lr"><option>Emergency Officer</option><option>Field Rescue Team</option><option>Administrator</option></select></label>
+  <p class="fielderr" id="lerr" role="alert"></p>
+  <button class="btn pri xl" type="submit">LOGIN</button>
+  <p style="margin-top:1rem"><button type="button" class="btn ghost" data-act="citizenOnly">${ic('phone',18)} Open citizen emergency view (no login)</button></p>
+  <p class="help">Prototype: credentials are pre-filled. Any non-empty values work.</p></form>
+  <p class="lfoot">Smart India Hackathon 2026<br>SIH26192 | Team TamilNova</p></section></div>`;
+}
+
+function shell(inner){
+  const notes=S.notes.length,A=API.allWards(),hi=A.filter(w=>w.risk_score>=70).length,off=!S.online;
+  const top=[...A].sort((a,b)=>b.risk_score-a.risk_score)[0],tl=lvl(top.risk_score);
+  let ban='';
+  if(off)ban+=`<div class="bn info" role="status">${ic('wifioff',20)}<span><b>Offline mode active.</b> Showing last synchronized data (${S.lastSync}). Map, shelters and routes stay available from cache.</span><span class="r">${btn('Offline details','nav',{id:'offline',cls:'sm'})}</span></div>`;
+  if(S.faults.weather&&!off)ban+=`<div class="bn" style="--x:var(--orange);--xt:var(--orange-t)" role="alert">${ic('cloud',20)}<span><b>Latest weather data unavailable.</b> Showing last synchronized data (${S.lastSync}).</span></div>`;
+  if(S.faults.ml)ban+=`<div class="bn" style="--x:var(--red);--xt:var(--red-t)" role="alert">${ic('ban',20)}<span><b>Risk prediction temporarily unavailable.</b> Manual assessment required.</span></div>`;
+  if(S.stage>=1&&!S.faults.ml)ban+=`<div class="bn solid lv-${tl.key}" role="status">${ic(tl.icon,24)}<span style="font-size:1.05rem"><b>${tl.name}</b> · ${top.ward} (${top.locality}) at ${top.risk_score}%${top.lead_time_minutes?` · window ${fHM(top.lead_time_minutes)}`:''}${S.lang==='ta'&&tl.key==='high'?' · '+TA['HIGH FLOOD RISK']:''}</span><span class="r"><button class="btn sm" data-act="why" data-id="${top.id}">${ic('help',16)}${t('Why?')}</button></span></div>`;
+  return `<div class="shell ${S.navOpen?'nav-open':''}">
+  <aside class="side" aria-label="Main navigation"><div class="logo">${logoSvg()}<div><b>NEERKAVAL</b><small lang="ta">நீர் காவல்</small></div></div>
+  <nav class="nav" aria-label="Primary">${NAV.map(n=>`<button data-act="nav" data-id="${n[0]}"${S.view===n[0]?' aria-current="page"':''}>${ic(n[1],20)}<span>${t(n[2])}</span>${n[0]==='alerts'&&hi?`<span class="cnt" aria-label="${hi} high-risk wards">${hi}</span>`:''}</button>`).join('')}<div class="sep"></div><button data-act="nav" data-id="citizen"${S.view==='citizen'?' aria-current="page"':''}>${ic('phone',20)}<span>${t('Citizen View')}</span></button></nav>
+  <div class="foot">SIH26192 · Team TamilNova<br>Prototype — sample data</div></aside>
+  <div style="min-width:0;position:relative"><header class="top"><button class="iconbtn" id="menuBtn" data-act="menu" aria-label="Open menu" aria-expanded="${S.navOpen}">${ic('menu',20)}</button>
+  <div class="search"><label class="sr" for="sq">Search ward or location</label>${ic('search',18)}<input id="sq" list="wl" placeholder="Search ward / location" autocomplete="off"><datalist id="wl">${WARDS.map(w=>`<option value="Ward ${w.id} — ${w.loc}">`).join('')}${SHELTERS.map(s=>`<option value="${s.name}">`).join('')}</datalist></div>
+  <span class="sp"></span>
+  <div class="clock" aria-label="System time"><span data-clock="1">${fClock(S.sim)}</span><small>${S.stage>=0?'Simulated time':''}</small></div>
+  <button class="pill ${S.online?'on':'off'}" data-act="net" aria-pressed="${!S.online}" aria-label="Network status: ${S.online?'online':'offline'}. Activate to simulate a change."><span class="dot"></span>${ic(S.online?'wifi':'wifioff',16)}<span class="t">${S.online?'ONLINE':'OFFLINE'}</span></button>
+  <div class="lang" role="group" aria-label="Language"><button data-act="lang" data-id="ta" aria-pressed="${S.lang==='ta'}" lang="ta">தமிழ்</button><button data-act="lang" data-id="en" aria-pressed="${S.lang==='en'}">English</button></div>
+  <button class="iconbtn" data-act="bell" aria-label="Notifications, ${notes} new" aria-expanded="${S.bell}">${ic('bell',20)}${notes?`<span class="badge">${notes}</span>`:''}</button>
+  <div class="prof"><div class="av" aria-hidden="true">${esc((S.user[0]||'O').toUpperCase())}</div><span>${esc(S.user)}<small>${esc(S.role)}</small></span></div>
+  <button class="iconbtn" data-act="logout" aria-label="Log out" title="Log out">${ic('x',18)}</button>
+  ${S.bell?`<div class="pop" role="dialog" aria-label="Notifications"><div style="padding:.6rem .8rem;font-weight:700;border-bottom:1px solid var(--line)">Notifications</div>${S.notes.length?S.notes.map(n=>`<div style="padding:.6rem .8rem;border-bottom:1px solid var(--line)" class="lv-${['safe','warn','high','crit'][n.lv]}"><span class="rb" style="margin-bottom:.2rem">${ic(['shield','tri','oct','siren'][n.lv],14)}${STAGES[n.lv].n}</span><div class="small">${esc(n.m)}</div></div>`).join(''):'<div style="padding:.8rem" class="muted small">No new notifications. Use Demo mode to simulate rainfall.</div>'}</div>`:''}</header>
+  ${ban}<main id="main" tabindex="-1">${inner}</main></div></div>`;
+}
+
+/* ---- Dashboard ---- */
+VIEWS.dashboard=()=>{
+  const A=API.allWards(),ml=mlDown(),st=S.stage,hi=A.filter(w=>w.risk_score>=70).length,cr=A.filter(w=>w.risk_score>=88).length,w12=selWard(),fw=fourW(w12),l=lvl(w12.risk_score);
+  const pk=API.ward(12).peak_time;
+  const kp=(cls,label,val,sub,ta,extra='')=>`<div class="card kpi ${cls}"><div class="l">${label}</div><div class="v num"${extra}>${val}</div><div class="s">${sub}${ta?`<br><span class="ta">${ta}</span>`:''}</div></div>`;
+  const kpis=`<div class="grid g4" role="group" aria-label="Emergency overview">
+   ${kp(hi?'lv-high':'lv-safe',ic(hi?'oct':'shield',18)+' '+t('High-risk wards'),ml?'—':hi,ml?'Prediction unavailable':`of ${A.length} wards · score ≥ 70%`)}
+   ${kp(cr?'lv-crit':'lv-safe',ic(cr?'siren':'shield',18)+' '+t('Critical wards'),ml?'—':cr,ml?'Prediction unavailable':cr?'Immediate action needed':'None')}
+   ${kp('blue',ic('clock',18)+' '+t('Avg. evacuation lead time'),ml||LEAD[st]==null?'—':`<span data-cd="1" data-off="0" data-f="hm">${fHM(Math.ceil(S.secs/60))}</span>`,LEAD[st]==null?'No flood expected in 6 h':'Time before predicted peak')}
+   ${kp('blue',ic('water',18)+' '+t('Predicted flood peak'),ml||LEAD[st]==null?'—':pk,LEAD[st]==null?'None predicted':'Ward 12 · Kundah Valley')}</div>`;
+  const top=[...A].sort((a,b)=>b.risk_score-a.risk_score).slice(0,6);
+  const pri=`<ul class="wlist" aria-label="Priority wards">${top.map(w=>`<li${w.id===S.ward?' aria-current="true"':''}><span class="nm">Ward ${w.id}</span><span class="lc">${w.locality}</span>${ml?'<span class="rb lv-warn">Unavailable</span>':badge(w.risk_score)}${!ml&&w.risk_score>=25?whyBtn(w.id):''}<button class="btn sm" data-act="openWard" data-id="${w.id}" aria-label="Open Ward ${w.id} analysis">Open</button></li>`).join('')}</ul>`;
+  const dec=`<section class="card lv-${l.key}" style="border-top:6px solid var(--x)"><header><h2>${w12.ward} · ${w12.locality}</h2><div class="r">${ml?'':badge(w12.risk_score)}</div></header>
+   ${ml?'<div class="body"><div class="err">'+ic('ban',20)+'<div><b>Risk prediction temporarily unavailable.</b></div></div></div>':`<dl class="fourw" style="margin:0">${[['WHAT','what'],['WHY','why'],['WHEN','when'],['WHERE','where']].map(r=>`<div class="row"><dt>${r[0]}</dt><dd>${fw[r[1]]}</dd></div>`).join('')}</dl>
+   <div class="body" style="border-top:1px solid var(--line);display:flex;gap:.5rem;flex-wrap:wrap">${whyBtn(w12.id).replace('btn why','btn why').replace('min-height:32px','')}${btn('Safe route','goRoute',{icon:'route',cls:'sm',id:w12.id,dis:st<1})}${btn(t('Send alert'),'goAlert',{icon:'send',cls:'sm danger',id:w12.id,dis:st<1})}${btn('Full analysis','openWard',{cls:'sm',id:w12.id})}</div>`}</section>`;
+  return pageHead(t('Emergency overview'),`Flood risk across 16 wards · sample data for demonstration`,st===0?btn('Start rainfall scenario','autoplay',{icon:'play',cls:'pri'}):'')+
+  kpis+`<div class="grid split mt"><div>${card('Live flood map',mapView({})+legend(false),{right:layersBar(),nobody:false,id:'m1'})}</div><div style="display:grid;gap:.9rem;align-content:start">${dec}${card('Priority wards',pri,{nobody:true})}</div></div>
+  <div class="grid split2 mt">${card('Rainfall intensity (mm/hr)',rainChart()+`<p class="small muted">${chip('measured')} last 24 h &nbsp; ${chip('forecast')} next 3 h · sample data</p>`)}
+  ${card('Risk timeline · Ward '+S.ward,timeline(selWard()),{right:chip('ai')})}</div>`;
+};
+
+/* ---- Live map ---- */
+VIEWS.map=()=>{
+  const w=selWard(),l=lvl(w.risk_score),evac=S.mapMode==='evac';
+  return pageHead(t('Live Map'),'Select a ward on the map to see its status',`<div class="seg" role="group" aria-label="Map mode"><button data-act="mapMode" data-id="risk" aria-pressed="${!evac}">Risk map</button><button data-act="mapMode" data-id="evac" aria-pressed="${evac}">${ic('route',16)} ${t('SAFE ROUTE')}</button></div>`)+
+  `<div class="grid split"><div>${card(evac?'Evacuation mode':'Flood risk',mapView({mode:evac?'evac':'risk'})+legend(evac),{right:layersBar()})}</div>
+  <div style="display:grid;gap:.9rem;align-content:start"><section class="card lv-${l.key}" style="border-top:6px solid var(--x)"><header><h2>${w.ward} · ${w.locality}</h2></header><div class="body">${mlDown()?'<div class="err">'+ic('ban',20)+'<b>Risk prediction temporarily unavailable.</b></div>':`<div style="display:flex;align-items:center;gap:.8rem;flex-wrap:wrap"><span class="bigscore num" style="color:var(--x)">${w.risk_score}%</span><div>${badge(w.risk_score,{noscore:1,lg:1})}<div class="small muted" style="margin-top:.3rem">Confidence ${w.confidence}%</div></div></div>
+   <p style="margin-top:.6rem">${fourW(w).when}</p><p>${fourW(w).where}</p><div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:.7rem">${whyBtn(w.id)}${btn('Ward analysis','openWard',{id:w.id,cls:'sm'})}${btn('Safe route','goRoute',{id:w.id,cls:'sm',icon:'route'})}</div>`}</div></section>
+  ${w.lead_time_minutes!=null&&!mlDown()?cdBlock(w):''}
+  ${card('Hazards on road network',`<ul class="wlist" style="margin:-.9rem">${HAZ.map(h=>{const s=hazState(h);return `<li><span class="nm" style="min-width:0;flex:1">${h.name}<span class="ta muted small" style="display:block;font-weight:600">${h.ta}</span></span><span class="rb lv-${s==='blocked'?'high':s==='caution'?'warn':'safe'}">${ic(s==='blocked'?'ban':s==='caution'?'tri':'check',14)}${s.toUpperCase()}</span></li>`}).join('')}</ul>`)}</div></div>`;
+};
+
+/* ---- Risk analysis ---- */
+VIEWS.risk=()=>{
+  let A=API.allWards();A=S.rSort==='id'?A.sort((a,b)=>a.id-b.id):A.sort((a,b)=>b.risk_score-a.risk_score||a.id-b.id);
+  const w=selWard(),l=lvl(w.risk_score),ml=mlDown(),idx=LV.indexOf(l);
+  const mt=(k,v,c)=>`<div><div class="k"><span>${k}</span>${chip(c)}</div><div class="v">${v}</div></div>`;
+  const fc=Math.round(CUR_RAIN[S.stage]*(S.stage?1.22:1)*(.7+.3*WARDS[w.id-1].k));
+  const tbl=`<div class="scroll"><table class="t"><thead><tr><th>Ward</th><th>Locality</th><th>Risk</th><th>Lead</th><th><span class="sr">Actions</span></th></tr></thead><tbody>${A.map(x=>`<tr class="${x.id===S.ward?'sel':''}"><td class="b">${x.ward}</td><td>${x.locality}</td><td>${ml?'—':badge(x.risk_score)}</td><td class="num">${fHM(x.lead_time_minutes)}</td><td><button class="btn sm" data-act="selWard" data-id="${x.id}"${x.id===S.ward?' aria-current="true"':''}>${x.id===S.ward?'Selected':'Select'}</button></td></tr>`).join('')}</tbody></table></div>`;
+  const det=ml?`<div class="err">${ic('ban',22)}<div><b>Risk prediction temporarily unavailable.</b></div></div>`:`<section class="card lv-${l.key}" style="border-top:6px solid var(--x)"><header><h2>${w.ward.toUpperCase()} · ${w.locality}</h2><div class="r">${chip('ai')}</div></header><div class="body">
+   <div style="display:flex;gap:1.2rem;align-items:center;flex-wrap:wrap"><div><div class="small muted">Risk score</div><div class="bigscore num" style="color:var(--x)">${w.risk_score}%</div></div><div>${badge(w.risk_score,{lg:1,noscore:1,solid:1})}<div style="margin-top:.5rem">Road status: <b>${w.road_status}</b></div><div class="tamil small">${S.stage>=2?TA['HIGH FLOOD RISK']:l.ta}</div></div><div style="margin-left:auto">${whyBtn(w.id).replace('min-height:32px','')}</div></div>
+   <div class="meter" aria-hidden="true">${LV.map(x=>`<i style="background:${x.col}"></i>`).join('')}<span class="mk" style="left:${w.risk_score}%"></span></div><div class="mlabels" aria-hidden="true">${LV.map(x=>`<span>${x.name.split(' ')[0]}</span>`).join('')}</div></div></section>
+   ${card('Conditions & timing',`<div class="mg">${mt('Current rainfall intensity',w.rain_mm_hr+' mm/hr','measured')}${mt('Forecast rainfall (3 h)',fc+' mm/hr','forecast')}${mt('Antecedent rainfall (72 h)',w.antecedent_mm+' mm','measured')}${mt('Slope',w.slope_deg+'°','terrain')}${mt('Terrain elevation',w.elevation_m.toLocaleString('en-IN')+' m','terrain')}${mt('Soil saturation',w.soil_saturation+'%','est')}${mt('Road status',w.road_status,'forecast')}${mt('Est. lead time',fHM(w.lead_time_minutes),'ai')}${mt('Predicted flood peak',w.peak_time||'—','ai')}</div><p class="note">Prototype values are simulated. Chips show whether a number is measured, forecast, static terrain data, estimated or an AI output.</p>`,{cls:'mt'})}
+   <div class="mt">${w.lead_time_minutes!=null?cdBlock(w):''}</div>`;
+  return pageHead(t('Risk Analysis'),'Ward-by-ward flood risk with lead time',`<div class="seg" role="group" aria-label="Sort wards"><button data-act="rsort" data-id="score" aria-pressed="${S.rSort==='score'}">By risk</button><button data-act="rsort" data-id="id" aria-pressed="${S.rSort==='id'}">By ward no.</button></div>`)+
+  `<div class="grid" style="grid-template-columns:minmax(0,1fr) minmax(0,1.3fr)" id="rgrid">${card('All wards',tbl,{nobody:true})}<div>${det}</div></div>
+  <style>@media(max-width:1100px){#rgrid{grid-template-columns:minmax(0,1fr)!important}}</style>`;
+};
+
+/* ---- XAI page ---- */
+VIEWS.xai=()=>{
+  const w=selWard();
+  return pageHead(t('XAI Analysis'),'Every prediction answers what, why, when and where',`<label class="sr" for="xw">Ward</label><select id="xw" data-chg="xward" style="min-width:230px">${wardOpt(w.id)}</select>`)+
+  `<div class="grid split"><div>${card('Why is this area at risk?',xaiPanel(w),{right:whyChips()})}</div>
+  <div style="display:grid;gap:.9rem;align-content:start">${mlDown()?'':cdBlock(w)}${card('Risk timeline',timeline(w),{right:chip('ai')})}
+  ${card('Data provenance',`<ul class="small" style="padding-left:1.1rem;margin:0;display:grid;gap:.4rem"><li>${chip('measured')} gauge and sensor readings (rainfall now, past 72 h)</li><li>${chip('forecast')} short-term nowcast of rainfall</li><li>${chip('terrain')} slope and elevation from DEM</li><li>${chip('ai')} risk score, lead time, flood peak</li><li>${chip('xai')} factor contributions and plain-language reasons</li></ul>`)}</div></div>`;
+};
+const whyChips=()=>'';
+
+/* ---- Evacuation ---- */
+VIEWS.evac=()=>{
+  const st=S.stage,sh=SHELTERS.find(x=>x.id===S.shelter),ss=shStatus(sh),isA=sh.id==='A';
+  const blocked=isA&&st>=2&&!S.routeAlt,rs=isA?(st<1?'SAFE':st===1?'CAUTION':S.routeAlt?'SAFE':'BLOCKED'):'SAFE';
+  const cond=rs==='SAFE'?'safe':rs==='CAUTION'?'warn':'high';
+  const chips=SHELTERS.map(x=>`<button class="btn sm${x.id===S.shelter?' pri':''}" data-act="shelterSel" data-id="${x.id}" aria-pressed="${x.id===S.shelter}">${x.name.replace('Relief ','')}</button>`).join('');
+  const warn=isA&&st>=2?`<div class="err lv-high" style="border-color:var(--red);background:var(--red-t);margin-bottom:.8rem" role="alert">${ic('ban',26)}<div><b style="font-size:1.1rem">⚠ ROUTE BLOCKED</b><p>Low-lying culvert predicted unsafe.</p><p class="small tamil">தாழ்வான குழாய்ப்பாலம் பாதுகாப்பற்றது.</p>${S.routeAlt?'':`<div style="margin-top:.5rem">${btn('VIEW SAFE ALTERNATIVE','alt',{cls:'danger',icon:'route'})}</div>`}</div></div>`:isA&&st===1?`<div class="err" style="margin-bottom:.8rem">${ic('tri',22)}<div><b>Caution: culvert water level rising.</b><p class="small">Route stays open for now. Avoid after the next update.</p></div></div>`:'';
+  return pageHead(t('Evacuation')+' · '+t('SAFE ROUTE'),'Hydraulic hazard avoidance: elevated ridge roads, not the shortest path',`<div style="display:flex;gap:.3rem;flex-wrap:wrap" role="group" aria-label="Choose shelter">${chips}</div>`)+
+  `<div class="grid split"><div>${card('Evacuation map · Ward 12 → '+sh.name,mapView({mode:'evac',you:1})+legend(true),{right:layersBar()})}</div>
+  <div style="display:grid;gap:.9rem;align-content:start">${warn}
+  <section class="card lv-${cond}" style="border-top:6px solid var(--x)"><header><h2>${t('SAFE ROUTE')} <span class="ta small muted">பாதுகாப்பான பாதை</span></h2></header><div class="body">
+  <div class="route-v" aria-label="Route: current location, ridge road, shelter"><div class="st">${ic('pin',20)} Citizen location · Ward 12</div><div class="ln${blocked?' bad':''}"></div><div class="st ${blocked?'':'safe'}">${ic('route',20)} ${blocked?'Direct road via culvert (blocked)':isA?'Elevated safe road':'Elevated road'}</div><div class="ln${blocked?' bad':''}"></div><div class="st ${blocked?'':'safe'}">${ic('mountain',20)} ${isA?'Ridge route':'Ridge connector'}</div><div class="ln"></div><div class="st safe">${ic('home',20)} ${sh.name}</div></div>
+  <div class="mg" style="margin-top:.8rem"><div><div class="k">Distance</div><div class="v">${sh.dist} km</div></div><div><div class="k">Travel time</div><div class="v">${sh.min} min</div></div><div><div class="k">Road condition</div><div class="v"><span class="rb lv-${cond}">${ic(cond==='safe'?'check':cond==='warn'?'tri':'ban',14)}${rs}</span></div></div><div><div class="k">Shelter</div><div class="v"><span class="rb lv-${ss.lv}">${ic(ss.ic,14)}${ss.k}</span></div></div></div>
+  <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.8rem">${btn('Shelter details','shelterPick',{id:sh.id,cls:'sm'})}${btn(t('Send alert'),'goAlert',{id:12,cls:'sm danger',icon:'send',dis:st<1})}</div></div></section>
+  ${card('Hazard status',`<ul class="wlist" style="margin:-.9rem">${HAZ.map(h=>{const s=hazState(h);return `<li><span class="nm" style="min-width:0;flex:1">${h.name}</span><span class="rb lv-${s==='blocked'?'high':s==='caution'?'warn':'safe'}">${ic(s==='blocked'?'ban':s==='caution'?'tri':'check',14)}${s.toUpperCase()}</span></li>`}).join('')}<li><span class="nm" style="min-width:0;flex:1">Bridge 2 (elevated)</span><span class="rb lv-safe">${ic('check',14)}OPEN</span></li></ul>`)}
+  </div></div>`;
+};
+
+/* ---- Shelters ---- */
+VIEWS.shelters=()=>{
+  return pageHead(t('Shelters'),'Capacity and supplies update with the scenario')+`<div class="grid g3">${SHELTERS.map(s=>{
+    const occ=s.occ[S.stage],av=Math.max(0,s.cap-occ),ss=shStatus(s),pc=Math.round(occ/s.cap*100);
+    const f=(ic_,l_,v,ok)=>`<span>${ic(ic_,15)}${l_}: <b>${v}</b> ${ok?ic('check',13):ic('tri',13)}</span>`;
+    return `<article class="card sh lv-${ss.lv}" aria-label="${s.name}"><div style="display:flex;gap:.5rem;align-items:flex-start;flex-wrap:wrap"><div style="flex:1"><h3>${s.name.toUpperCase()}</h3><div class="small muted">${s.site}<br><span class="ta">${s.ta}</span></div></div><span class="rb lv-${ss.lv}">${ic(ss.ic,14)}${ss.k}</span></div>
+    <div class="small"><b>${s.dist} km</b> from Ward 12 · ${s.min} min</div>
+    <div class="occ" role="img" aria-label="${pc}% occupied"><i style="width:${pc}%"></i></div>
+    <dl><div><dt>Capacity</dt><dd>${s.cap}</dd></div><div><dt>Occupied</dt><dd>${occ}</dd></div><div><dt>Available</dt><dd>${av}</dd></div></dl>
+    <div class="facs">${f('water','Water',s.water,s.water==='OK')}${f('food','Food',s.food,s.food==='OK')}${f('med','Medical',s.med,s.med!=='None on site')}</div>
+    <div style="display:flex;gap:.4rem;flex-wrap:wrap;margin-top:auto">${btn('VIEW ROUTE','viewRoute',{id:s.id,cls:'pri sm',icon:'route'})}${btn('Details','shelterPick',{id:s.id,cls:'sm'})}</div></article>`}).join('')}</div>`;
+};
+
+/* ---- Alerts ---- */
+function alertMsg(lang,lv){
+  const en='⚠ FLOOD ALERT\n\nHeavy rainfall and rising flood risk detected in your area.\n\nPlease move to the nearest safe shelter using the recommended evacuation route.\n\nShelter: Relief Shelter A, 2.4 km.';
+  const ta='⚠ வெள்ள எச்சரிக்கை\n\nஉங்கள் பகுதியில் கனமழை மற்றும் வெள்ள அபாயம் அதிகரித்துள்ளது.\n\nபரிந்துரைக்கப்பட்ட வெளியேற்றப் பாதையில் அருகிலுள்ள பாதுகாப்பான நிவாரண முகாமிற்குச் செல்லவும்.\n\nநிவாரண முகாம் A — 2.4 கி.மீ.';
+  const pre=lv==='crit'?'🚨 EVACUATE NOW — உடனடியாக வெளியேறவும்\n\n':'';
+  return pre+(lang==='ta'?ta:lang==='en'?en:ta+'\n\n'+en);
+}
+const alertLevel=()=>['NONE','ADVISORY','WARNING','HIGH','CRITICAL'][S.stage+ (S.stage?1:0)] ;
+const LEVELN=['—','ADVISORY','HIGH','CRITICAL'];
+function alertRecipients(){const A=S.af.ward==='all'?API.allWards().filter(w=>w.risk_score>=70):[API.ward(S.af.ward)];return A.reduce((a,w)=>a+w.pop,0)}
+VIEWS.alerts=()=>{
+  const st=S.stage,w=API.ward(S.af.ward==='all'?12:S.af.ward),l=lvl(w.risk_score),lv=st===3?'crit':'high',n=alertRecipients(),a=S.alertSent;
+  const chs=S.af.ch,off=!S.online;
+  const monitor=a?`<div class="pr"><div class="top2"><span>Delivered</span><span class="num" data-resp="del">0</span></div><div class="bar"><i data-respb="del"></i></div></div><div class="pr"><div class="top2"><span>Read</span><span class="num" data-resp="read">0</span></div><div class="bar"><i data-respb="read"></i></div></div><div class="pr"><div class="top2"><span>Acknowledged</span><span class="num" data-resp="ack">0</span></div><div class="bar"><i data-respb="ack"></i></div></div><div class="pr"><div class="top2"><span>Opened safe route</span><span class="num" data-resp="route">0</span></div><div class="bar"><i data-respb="route"></i></div></div><p class="small muted">Sent ${a.ts} to ${a.n.toLocaleString('en-IN')} residents of ${esc(a.wardName)} via ${a.chs}. Simulated response.</p>`:'<p class="muted">No alert sent in this scenario yet. After sending, delivery and response appear here.</p>';
+  return pageHead(t('Alerts')+' & Broadcast','Native Tamil SMS / WhatsApp / GSM broadcast from the control room')+
+  `<div class="grid split2"><div>${card('Compose alert',`
+   ${st<1?`<div class="err" style="margin-bottom:.8rem">${ic('info',20)}<div><b>No active risk.</b><p class="small">Alerts unlock when a ward reaches WARNING. Use Demo mode to raise the risk.</p></div></div>`:''}
+   <label class="f"><span>Target</span><select id="aw" data-chg="aw"><option value="all"${S.af.ward==='all'?' selected':''}>All high-risk wards</option>${wardOpt(S.af.ward)}</select></label>
+   <div class="fieldrow"><div><div class="small muted">High-risk ward</div><div class="b" style="font-size:1.2rem">${S.af.ward==='all'?'Multiple':w.ward}</div></div><div><div class="small muted">Alert level</div><span class="rb lv-${st>=3?'crit':st===2?'high':st===1?'warn':'safe'}">${ic(st>=3?'siren':st===2?'oct':st===1?'tri':'shield',14)}${st>=3?'CRITICAL':st===2?'HIGH':st===1?'WATCH':'NONE'}</span></div></div>
+   <fieldset style="border:0;padding:0;margin:.9rem 0 .5rem"><legend class="b" style="margin-bottom:.3rem">Language</legend>${[['ta','தமிழ்'],['en','English'],['both','Tamil + English']].map(x=>`<label class="chk"><input type="radio" name="alang" data-chg="alang" value="${x[0]}"${S.af.lang===x[0]?' checked':''}>${x[1]}</label>`).join('')}</fieldset>
+   <fieldset style="border:0;padding:0;margin:.5rem 0"><legend class="b" style="margin-bottom:.3rem">Channels</legend>${[['sms','SMS'],['wa','WhatsApp'],['gsm','GSM cell broadcast']].map(x=>`<label class="chk"><input type="checkbox" data-chg="ach" value="${x[0]}"${chs[x[0]]?' checked':''}>${x[1]}${x[0]==='wa'&&off?' <span class="small muted">(needs internet)</span>':''}</label>`).join('')}</fieldset>
+   <label class="f" style="margin-top:.6rem"><span>Message preview</span><textarea id="amsg" lang="ta">${esc(alertMsg(S.af.lang,lv))}</textarea></label>
+   <p class="small muted">Estimated reach: <b>${n.toLocaleString('en-IN')}</b> residents. ${off?'<b>Offline:</b> alert will be queued to the GSM gateway (SMS / cell broadcast only).':''}</p>
+   <div style="display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.7rem">${btn('SEND ALERT','confirmAlert',{cls:'danger',icon:'send',dis:st<1})}${btn('SCHEDULE ALERT','schedAlert',{icon:'clock',dis:st<1})}${btn('CANCEL','cancelAlert')}</div>`)}</div>
+  <div style="display:grid;gap:.9rem;align-content:start">${card('Monitor response',monitor)}${card('Alert log',`<div class="scroll"><table class="t"><thead><tr><th>Time</th><th>Target</th><th>Level</th><th>Channel</th><th>Sent to</th></tr></thead><tbody>${S.alertLog.map(x=>`<tr><td class="num">${x.t}</td><td>${esc(x.ward)}</td><td><b>${esc(x.lv)}</b></td><td>${esc(x.ch)}</td><td class="num">${x.n.toLocaleString('en-IN')}${x.sched?' <span class="tag">SCHEDULED</span>':''}</td></tr>`).join('')}</tbody></table></div>`,{nobody:true})}</div></div>`;
+};
+
+/* ---- Reports ---- */
+VIEWS.reports=()=>{
+  const st=S.stage,list=S.reports.filter(r=>r.min<=st||r.mine);
+  return pageHead(t('Citizen Reports'),'Reports support the prediction; they do not replace the weather + terrain model')+
+  `<div class="grid split2"><div>${card('New report',`<form id="repForm" novalidate>
+   <label class="f"><span>Location</span><input type="text" id="rl" placeholder="e.g. Ward 12 · near the low bridge" value="${esc(S.rf.loc||'')}"><span class="fielderr" id="rlerr"></span></label>
+   <div class="fieldrow"><label class="f"><span>Report type</span><select id="rt">${['Rising water','Flooded road','Blocked bridge','Missing person','Rescue requirement','Shelter issue'].map(x=>`<option>${x}</option>`).join('')}</select></label>
+   <label class="f"><span>Severity</span><select id="rs"><option>Low</option><option selected>Medium</option><option>High</option></select></label></div>
+   <label class="f"><span>Description</span><textarea id="rd" style="min-height:90px" placeholder="What are you seeing?"></textarea></label>
+   <div class="fieldrow"><label class="f"><span>Photo (optional)</span><input type="file" id="rp" accept="image/*"></label><div><span class="b" style="font-size:.9rem">GPS location</span><div style="margin-top:.3rem">${btn('Use my GPS','gps',{icon:'gps',cls:'sm'})}</div><p class="help" id="gpsout" role="status">${esc(S.rf.gps||'Not captured')}</p></div></div>
+   <button class="btn pri xl" type="submit">SUBMIT REPORT</button></form>`)}</div>
+  <div style="display:grid;gap:.9rem;align-content:start">${card('Reports on map',mapView({small:1})+`<p class="small muted" style="margin-top:.5rem">Diamond markers show reports. Citizen reports are advisory signals until verified.</p>`)}
+  ${card(`Recent reports (${list.length})`,`<ul class="wlist" style="margin:-.9rem">${list.map(r=>`<li><span class="rb lv-${r.sev==='High'?'high':r.sev==='Medium'?'warn':'watch'}">${ic(r.sev==='High'?'oct':'tri',14)}${r.sev}</span><div style="flex:1;min-width:10rem"><b>${esc(r.type)}</b> · ${esc(r.loc)}<div class="small muted">${esc(r.desc)}<br>${r.src} · ${r.ago} min ago</div></div>${r.v?`<span class="rb lv-safe">${ic('check',14)}Verified</span>`:btn('Verify','verify',{id:r.id,cls:'sm'})}</li>`).join('')||'<li class="muted">No reports yet.</li>'}</ul>`,{nobody:true})}</div></div>`;
+};
+
+/* ---- Rescue + SOS ---- */
+function sosString(){
+  const b=+($('#sb')?.value??S.rf.sb??5),road=$('#sr')?.value||S.rf.sr||'BLOCKED',need=$('#sn')?.value||S.rf.sn||'BOATS';
+  return `SOS #LOC:${S.sosLoc}\n#NEED:${need}_${b}\n#ROAD:${road}`;
+}
+VIEWS.rescue=()=>{
+  const sc={ACTIVE:'safe','EN ROUTE':'warn',STANDBY:'watch'};
+  const teams=S.teams.map(x=>`<article class="card lv-${sc[x.status]||'watch'}" style="border-top:6px solid var(--x);padding:.8rem"><div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap"><h3 style="font-family:var(--fd);font-size:1.6rem">TEAM ${x.id}</h3><span class="rb lv-${sc[x.status]||'watch'}">${ic(x.status==='ACTIVE'?'check':x.status==='EN ROUTE'?'nav':'clock',14)}${x.status}</span></div>
+   <dl class="det" style="display:block;padding:0;border:0"><dl style="margin:.4rem 0"><dt>Location</dt><dd>Ward ${x.ward}</dd><dt>Personnel</dt><dd>${x.ppl}</dd><dt>Boats</dt><dd>${x.boats}</dd><dt>Equipment</dt><dd style="font-weight:500">${x.eq}</dd><dt>Communication</dt><dd>${x.comm} ${x.data?'':`<span class="tag">NO DATA</span>`}</dd></dl></dl>
+   <div style="display:flex;gap:.4rem;flex-wrap:wrap">${btn('Dispatch to Ward '+S.ward,'dispatch',{id:x.id,cls:'sm',icon:'send',dis:S.stage<1})}</div></article>`).join('');
+  const sos=`<div class="sos" id="sosraw" aria-label="SOS message">${esc(sosString())}</div>`;
+  return pageHead(t('Rescue Teams')+' / GSM SOS','Rescue teams keep working when mobile data is gone')+
+  `<div class="grid split"><div><div class="grid g2">${teams}</div></div>
+  <div style="display:grid;gap:.9rem;align-content:start">${card('GSM SOS fallback',`
+   <div class="mg" style="grid-template-columns:1fr 1fr;margin-bottom:.8rem"><div><div class="k">Communication mode</div><div class="v" style="font-size:1.3rem">GSM / 2G</div></div><div><div class="k">GPS</div><div class="v" style="font-size:1.3rem"><span class="st-ok">${ic('check',16)} ${S.faults.gps?'<span class="st-down">Unavailable</span>':'Available'}</span></div></div><div><div class="k">Data connection</div><div class="v" style="font-size:1.3rem"><span class="st-down">${ic('ban',16)} Unavailable</span></div></div><div><div class="k">Location</div><div class="v" style="font-size:1.3rem">${esc(S.sosLoc)}</div></div></div>
+   <div class="fieldrow"><label class="f"><span>Need</span><select id="sn" data-chg="sosf"><option${S.rf.sn==='BOATS'||!S.rf.sn?' selected':''}>BOATS</option><option${S.rf.sn==='MEDICAL'?' selected':''}>MEDICAL</option><option${S.rf.sn==='FOOD'?' selected':''}>FOOD</option></select></label><label class="f"><span>Quantity</span><input type="number" id="sb" min="1" max="20" value="${S.rf.sb||5}" data-chg="sosf"></label></div>
+   <label class="f"><span>Road status</span><select id="sr" data-chg="sosf"><option${S.rf.sr==='BLOCKED'||!S.rf.sr?' selected':''}>BLOCKED</option><option${S.rf.sr==='OPEN'?' selected':''}>OPEN</option><option${S.rf.sr==='FLOODED'?' selected':''}>FLOODED</option></select></label>
+   ${sos}<p class="help">Sent as a compact SMS over 2G GSM. The control room parses the # tags automatically.</p>
+   ${S.faults.gps?`<p class="fielderr">Location unavailable. Select your location manually:</p><select id="sl" data-chg="sosloc" aria-label="Select location manually">${WARDS.map(w=>`<option value="${(11.3+w.id*.01).toFixed(2)},${(76.8+w.id*.005).toFixed(2)}">Ward ${w.id} — ${w.loc}</option>`).join('')}</select>`:''}
+   <div style="margin-top:.7rem">${btn('SEND SOS','sendSos',{cls:'danger xl',icon:'send'})}</div>
+   ${S.sos?`<div class="err" style="margin-top:.7rem;border-color:var(--green);background:var(--green-t)" role="status">${ic('check',22)}<div><b>SOS queued via GSM at ${S.sos.t}</b><p class="small">Status: <b id="sosst">${S.sos.st}</b></p></div></div>`:''}`)}
+  ${card('Incoming SOS log',`<ul class="wlist" style="margin:-.9rem">${S.sosLog.map(x=>`<li style="align-items:flex-start"><span class="rb lv-warn">${ic('radio',14)}${x.id}</span><div style="flex:1;min-width:12rem"><div class="sos" style="padding:.4rem .6rem;font-size:.82rem">${esc(x.raw)}</div><div class="small muted">${esc(x.note)} · ${x.t}</div></div></li>`).join('')}</ul>`,{nobody:true})}</div></div>`;
+};
+
+/* ---- Offline ---- */
+VIEWS.offline=()=>{
+  const on=S.online;
+  const item=(n,v,ok=true)=>`<li class="svc"><span class="st-ok">${ic('check',20)}</span><span><b>${n}</b><span class="small muted">${v}</span></span><span class="rb lv-safe">Available</span></li>`;
+  return pageHead(t('Offline Mode'),'Pre-emptive 30 km caching keeps maps and routes usable without internet',`<label class="chk"><input type="checkbox" data-chg="netbox"${!on?' checked':''}> Simulate no internet</label>`)+
+  `<div class="grid split2"><div>${card('Connection',`<div style="display:grid;gap:.6rem"><div class="err" style="${on?'border-color:var(--green);background:var(--green-t)':'border-color:var(--red);background:var(--red-t)'}" role="status">${ic(on?'wifi':'wifioff',28)}<div><b style="font-size:1.25rem">${on?'🟢 ONLINE':'🔴 INTERNET UNAVAILABLE'}</b><div class="small">${on?'Live data flowing.':'Live weather and alerts paused.'}</div></div></div>
+   <div class="err" style="border-color:var(--green);background:var(--green-t)">${ic('map',28)}<div><b style="font-size:1.25rem">🟢 OFFLINE MAP AVAILABLE</b><div class="small">Cached region ready for use.</div></div></div></div>
+   <div class="mg" style="margin-top:.8rem"><div><div class="k">Cached map</div><div class="v">30 km radius</div></div><div><div class="k">Last synchronization</div><div class="v" id="lsync">${S.lastSync}</div></div></div>
+   <div style="margin-top:.8rem;display:flex;gap:.5rem;flex-wrap:wrap">${btn(S.syncing?'Syncing…':'SYNC WHEN ONLINE','sync',{cls:'pri',icon:'refresh',dis:S.syncing})}</div>
+   <p class="help" role="status">${on?'Tap to refresh the cache now.':'Sync starts automatically when the connection returns.'}</p>`)}
+  ${card('What stays available offline',`<ul class="wlist" style="margin:-.9rem">${item('Cached map tiles','30 km around the district office')}${item('Shelters','Locations, capacity as of last sync')}${item('Evacuation routes','Ridge routes and known hazards')}${item('Report drafts','Saved on device, sent when online')}${item('SOS via GSM','Compact SMS, no data needed')}</ul>`,{nobody:true})}</div>
+  <div>${card('Offline cache radius',`<svg viewBox="0 0 400 300" width="100%" role="img" aria-label="Diagram: 30 kilometre cached radius around the control room"><rect width="400" height="300" fill="#dfe6d3"/><circle cx="200" cy="150" r="130" fill="#1A63C7" fill-opacity=".12" stroke="#1A63C7" stroke-width="3" stroke-dasharray="8 5"/><circle cx="200" cy="150" r="65" fill="none" stroke="#1A63C7" stroke-opacity=".5" stroke-dasharray="3 4"/>${[[200,150],[150,90],[270,100],[240,210],[130,200]].map(p=>`<circle cx="${p[0]}" cy="${p[1]}" r="6" fill="#0B1F3A"/>`).join('')}<path d="M0 120 C100 150 160 160 230 200 S350 240 400 250" fill="none" stroke="#4A90D9" stroke-width="6"/><text x="210" y="143" style="font:700 13px Barlow,sans-serif">Control room</text><text x="200" y="291" text-anchor="middle" style="font:700 14px Barlow,sans-serif;fill:#1A63C7">30 km cached radius</text></svg>
+   <p class="note">Prototype simulation. Production uses a service worker with IndexedDB for tiles, shelters, routes and pending reports.</p>`)}
+  ${card('Behaviour when connection drops',`<ol style="margin:0;padding-left:1.2rem;display:grid;gap:.3rem"><li>Banner switches to <b>Offline mode active</b>.</li><li>Map, shelters and routes load from cache.</li><li>Weather and risk show the last synced values, labelled stale.</li><li>Alerts and SOS fall back to the GSM gateway.</li><li>Everything syncs when the connection returns.</li></ol>`,{cls:'mt'})}</div></div>`;
+};
+
+/* ---- System ---- */
+function services(){
+  const off=!S.online,F=S.faults;
+  return [
+   ['Weather API','cloud',off||F.weather?['down','Unavailable']:['ok','Online'],off||F.weather?'Latest weather data unavailable. Showing last synchronized data.':'Nowcast updated moments ago'],
+   ['ML Model','xai',F.ml?['down','Unavailable']:['ok','Running'],F.ml?'Risk prediction temporarily unavailable.':'Inference healthy'],
+   ['GIS','map',['ok','Available'],off?'Serving cached layers':'Live layers'],
+   ['Database','db',off?['warn','Local cache']:['ok','Connected'],off?'Read-only from device':'Primary replica in sync'],
+   ['Alert Service','bell',off?['warn','Queued']:['ok','Ready'],off?'Alerts fall back to GSM':'SMS and WhatsApp connectors ready'],
+   ['GSM Gateway','radio',['warn','Limited'],'2 of 3 sectors reachable'],
+   ['Offline Cache','wifioff',['ok','Ready'],'30 km radius cached']];
+}
+VIEWS.system=()=>{
+  const sv=services(),w=selWard(),stale=!S.online||S.faults.weather;
+  const ico={ok:['check','safe'],warn:['tri','warn'],down:['ban','high']};
+  const json=JSON.stringify({ward:w.ward,risk_score:w.risk_score,risk_level:w.risk_level.split(' ')[0],rainfall_intensity:w.rainfall_intensity,slope_instability:w.slope_instability,soil_saturation:w.soil_saturation,lead_time_minutes:w.lead_time_minutes,peak_time:w.peak_time?w.peak_time.replace(/ (AM|PM)/,'').replace(/^(\d\d):(\d\d)$/,(m0,h,m)=>m0):null,road_status:w.road_status,nearest_shelter:w.nearest_shelter},null,2);
+  return pageHead(t('System Status'),'Service health, fault simulation and architecture')+
+  `<div class="grid split2"><div>${card('Services',sv.map(s=>`<div class="svc lv-${ico[s[2][0]][1]}"><span style="color:var(--x)">${ic(s[1],20)}</span><span><b>${s[0]}</b><span class="small muted">${s[3]}</span></span><span class="rb">${ic(ico[s[2][0]][0],14)}${s[2][1]}</span></div>`).join('')+`<div class="svc"><span>${ic('clock',20)}</span><span><b>Last data update</b><span class="small muted">${stale?'Stale — showing last synchronized data':'Live'}</span></span><span class="b num">${stale?S.lastSync:fClock(S.sim-90)}</span></div>`,{nobody:true})}
+  ${card('Fault simulator',`<p class="small muted" style="margin-bottom:.6rem">Trigger the error states designed for the prototype.</p>${[['weather','Weather API unavailable'],['ml','ML service unavailable'],['gps','GPS unavailable']].map(x=>`<label class="chk"><input type="checkbox" data-chg="fault" data-id="${x[0]}"${S.faults[x[0]]?' checked':''}>${x[1]}</label>`).join('')}<label class="chk"><input type="checkbox" data-chg="netbox"${!S.online?' checked':''}>Network unavailable</label>`,{cls:'mt'})}</div>
+  <div>${card('Data flow',`<div class="arch"><div class="nd">Weather / nowcast<small>rainfall intensity</small></div><div class="ar"></div><div class="nd">Terrain data<small>slope, elevation, DEM</small></div><div class="ar"></div><div class="nd">Soil / rainfall data<small>antecedent saturation</small></div><div class="ar"></div><div class="nd" style="background:var(--navy3);color:#fff">ML model</div><div class="ar"></div><div class="nd">Risk prediction</div><div class="ar"></div><div class="nd">XAI<small>factor contributions</small></div><div class="ar"></div><div class="nd">FastAPI</div><div class="ar"></div><div class="nd" style="background:var(--navy);color:#fff">NEERKAVAL web app</div><div class="ar"></div><div class="fan"><div class="nd">Dashboard</div><div class="nd">Evacuation</div><div class="nd">Alerts</div></div></div>`)}
+  ${card('API contract (live mock)',`<p class="small muted" style="margin-bottom:.5rem">The UI reads this shape from <code>API.ward(id)</code>. Point it at FastAPI later.</p><pre class="code">${esc(json)}</pre>`,{cls:'mt'})}</div></div>`;
+};
+
+/* ---- Settings ---- */
+VIEWS.settings=()=>pageHead(t('Settings'),'Display and language')+`<div class="grid g2">${card('Language',`<div class="seg" role="group" aria-label="Language"><button data-act="lang" data-id="ta" aria-pressed="${S.lang==='ta'}" lang="ta">தமிழ்</button><button data-act="lang" data-id="en" aria-pressed="${S.lang==='en'}">English</button></div><p class="help">Navigation and key emergency terms switch to Tamil.</p>`)}${card('Accessibility',`<label class="chk"><input type="checkbox" data-chg="large"${S.large?' checked':''}> Larger text</label><p class="help">Colour is never the only signal: every status has an icon, text and value.</p>`)}</div>`;
+
+/* ---- Citizen ---- */
+function citizenPhone(){
+  const w=API.ward(12),l=lvl(w.risk_score),st=S.stage,ml=mlDown();
+  const msg=['Your area is safe. Stay alert.','Rain is increasing. Stay informed.','Your area may experience flooding.','Flooding is expected now. Evacuate immediately.'][st];
+  const statTa=st>=2?TA['HIGH FLOOD RISK']:l.ta,head=st===3?'EVACUATE NOW':st===2?'HIGH FLOOD RISK':st===1?'FLOOD WATCH':'SAFE';
+  let body='';
+  const notif=S.alertSent?`<div class="ph-notif" role="alert"><b>🚨 HIGH FLOOD RISK</b><div class="small">NeerKaval · now</div><div class="small tamil">வெள்ள அபாயம் அதிகம் — உடனடியாக வெளியேறவும்</div></div>`:'';
+  if(S.ctab==='home'){
+    body=notif+`<div class="ph-stat lv-${l.key}"><div>${ic(l.icon,40)}</div><h2>${ml?'UNAVAILABLE':head}</h2><div class="ta">${ml?'':statTa}</div><p style="margin-top:.4rem;font-weight:600">${ml?'Risk prediction temporarily unavailable.':msg}</p></div>
+    ${w.lead_time_minutes!=null&&!ml?`<div style="margin-top:.7rem">${cdBlock(w)}</div>`:''}
+    <div class="qgrid">${btn(t('Start safe route'),'ctab',{id:'route',cls:'pri',icon:'route',is:26})}${btn(t('Find shelter'),'ctab',{id:'shelter',icon:'home',is:26})}${btn(t('Send SOS'),'ctab',{id:'sos',cls:'danger',icon:'radio',is:26})}${btn(t('Report flood'),'ctab',{id:'report',icon:'file',is:26})}</div>
+    <div class="card" style="margin-top:.7rem;padding:.6rem .8rem"><div class="small muted">${t('NEAREST SHELTER')} <span class="ta">${S.lang==='en'?'· அருகிலுள்ள நிவாரண முகாம்':''}</span></div><div class="b">Relief Shelter A · <span class="num" style="font-size:1.3rem">2.4 km</span></div></div>`;
+  }else if(S.ctab==='route'){
+    const blocked=st>=2;
+    body=`<h3 style="font-family:var(--fd);font-size:1.5rem;margin-bottom:.5rem">${t('SAFE ROUTE')} <span class="ta small muted">பாதுகாப்பான பாதை</span></h3>
+    <div class="route-v"><div class="st" style="border-color:var(--blue)">${ic('pin',22)} YOU ARE HERE 📍</div><div class="ln"></div><div class="st safe">${ic('route',22)} 🟢 SAFE ROUTE${st>=2?' · elevated ridge road':''}</div><div class="ln"></div><div class="st safe">${ic('home',22)} 🏠 Relief Shelter A</div></div>
+    ${blocked?`<div class="avoid" role="alert"><b>Avoid</b><ul><li>${ic('ban',18)} 🔴 FLOODED BRIDGE</li><li>${ic('ban',18)} 🔴 LOW CULVERT</li></ul></div>`:'<p class="small muted" style="margin-top:.7rem">No hazards on your route right now.</p>'}
+    <p style="margin-top:.6rem">2.4 km · about 28 min on foot</p>
+    ${S.navStarted?`<div class="err" style="border-color:var(--green);background:var(--green-t);margin-top:.6rem" role="status">${ic('nav',22)}<div><b>Navigation started</b><p class="small">Head north-west on the ridge road. Stay on the elevated road at the culvert junction.</p></div></div>`:''}
+    <div style="margin-top:.7rem">${btn(t('Navigate to safety'),'navstart',{cls:'pri xl',icon:'nav'})}</div>`;
+  }else if(S.ctab==='shelter'){
+    body=`<h3 style="font-family:var(--fd);font-size:1.5rem;margin-bottom:.5rem">${t('NEAREST SHELTER')}</h3>`+SHELTERS.filter(s=>s.id!=='D').slice(0,3).map(s=>{const ss=shStatus(s),a=s.cap-s.occ[st];return `<div class="card lv-${ss.lv}" style="padding:.7rem;margin-bottom:.5rem;border-left:6px solid var(--x)"><div style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap"><b>${s.name}</b><span class="rb">${ic(ss.ic,13)}${ss.k}</span></div><div class="small muted">${s.dist} km · ${a} places free · ${s.med}</div><div style="margin-top:.4rem">${btn('Route here','cRoute',{id:s.id,cls:'sm',icon:'route'})}</div></div>`}).join('');
+  }else if(S.ctab==='report'){
+    body=`<h3 style="font-family:var(--fd);font-size:1.5rem;margin-bottom:.5rem">${t('Report flood')}</h3><p class="small muted">Tap what you see. Your GPS location is attached.</p><div class="qgrid">${['Rising water','Flooded road','Blocked bridge','Need rescue'].map(x=>btn(x,'cReport',{id:x,icon:'file',is:24})).join('')}</div><p class="help" id="crmsg" role="status">${esc(S.rf.crmsg||'')}</p>`;
+  }else{
+    body=`<h3 style="font-family:var(--fd);font-size:1.5rem;margin-bottom:.5rem">${t('Send SOS')}</h3><p class="small muted">${S.online?'Sends your location to the control room.':'No internet. Sending as a GSM SMS.'}</p><div style="margin:.8rem 0"><button class="btn danger" data-act="cSos" style="width:100%;min-height:150px;border-radius:50%;max-width:200px;margin:0 auto;display:flex;flex-direction:column;font-size:1.8rem;font-family:var(--fd);font-weight:700">${ic('radio',44)}SOS</button></div><p class="help" id="csosmsg" role="status" style="text-align:center;font-weight:700">${esc(S.rf.csos||'')}</p><div class="sos" style="font-size:.8rem">SOS #LOC:11.42,76.86\n#NEED:RESCUE_1\n#ROAD:${st>=2?'BLOCKED':'OPEN'}</div>`;
+  }
+  return `<div class="phone" role="region" aria-label="Citizen mobile app preview"><div class="ph-top">${logoSvg().replace('<svg','<svg width="26" height="26"')}<b>NEERKAVAL</b><span style="margin-left:auto" class="small">${ic(S.online?'wifi':'wifioff',16)}</span></div><div class="ph-body">${body}</div>
+  <nav class="ph-nav" aria-label="Citizen navigation">${[['home','home','Home'],['route','route','Route'],['shelter','pin','Shelter'],['report','file','Report'],['sos','radio','SOS']].map(n=>`<button data-act="ctab" data-id="${n[0]}"${S.ctab===n[0]?' aria-current="page"':''}>${ic(n[1],22)}${t(n[2])}</button>`).join('')}</nav></div>`;
+}
+VIEWS.citizen=()=>pageHead(t('Citizen View'),'Simplified mobile-first interface for residents')+`<div class="phonewrap">${citizenPhone()}<div>${card('How citizens see it',`<ol style="padding-left:1.2rem;margin:0;display:grid;gap:.5rem"><li>A push and SMS alert arrives (send one from <b>Alerts</b>).</li><li>The home screen shows one status, one countdown and four big actions.</li><li><b>${t('Start safe route')}</b> shows the safe road and what to avoid.</li><li>With no internet, SOS goes out over GSM.</li></ol><p class="note">Use Demo mode (bottom left) to change the situation and watch this screen update.</p>`)}</div></div>`;
+function citizenOnlyView(){return `<div style="max-width:420px;margin:0 auto;padding:.5rem">${citizenPhone()}<p style="text-align:center;margin-top:.6rem">${btn('Back to sign in','logout',{cls:'ghost'})}</p></div>`}
+
+/* =====================================================================
+   OVERLAYS
+   ===================================================================== */
+function overlays(){
+  let h='';
+  if(S.drawer){const w=API.ward(S.drawer.ward);h+=`<div class="scrim" data-act="closeDrawer" style="justify-content:flex-end;align-items:stretch;padding:0;background:rgba(5,12,25,.45)"></div><aside class="drawer" role="dialog" aria-modal="true" aria-labelledby="dtitle" id="drawer"><header><h2 id="dtitle">${S.lang==='ta'?'ஏன்?':'Why?'} · ${w.ward} · ${w.locality}</h2><button class="iconbtn" data-act="closeDrawer" aria-label="Close explanation">${ic('x',18)}</button></header><div class="dbody">${xaiPanel(w,true)}<h4 style="margin:1rem 0 .4rem">Timing</h4>${w.lead_time_minutes!=null?cdBlock(w):''}</div><footer>${btn('Open safe route','goRoute',{id:w.id,cls:'pri',icon:'route',dis:S.stage<1})}${btn(t('Send alert'),'goAlert',{id:w.id,cls:'danger',icon:'send',dis:S.stage<1})}${btn('Full XAI page','goXai',{id:w.id})}</footer></aside>`}
+  const m=S.modal;
+  if(m){
+    let inner='';
+    if(m.type==='confirm'){const chs=['sms','wa','gsm'].filter(k=>S.af.ch[k]).map(k=>({sms:'SMS',wa:'WhatsApp',gsm:'GSM broadcast'}[k]));const nm=S.af.ward==='all'?'All high-risk wards':'Ward '+S.af.ward;
+      inner=`<header><h2 id="mt">Confirm alert</h2><button class="iconbtn" data-act="closeModal" aria-label="Close">${ic('x',18)}</button></header><div class="body"><p><b>Send to ${nm}</b> — about <b>${alertRecipients().toLocaleString('en-IN')}</b> residents.</p><p class="small muted">Channels: ${chs.join(', ')||'<b class="st-down">none selected</b>'} · Language: ${{ta:'Tamil',en:'English',both:'Tamil + English'}[S.af.lang]}</p>${!S.online?'<p class="small" style="color:var(--orange)"><b>Offline:</b> queued via GSM gateway (SMS / cell broadcast).</p>':''}<div class="msgbox" style="margin-top:.6rem;max-height:200px;overflow:auto">${esc($('#amsg')?.value||alertMsg(S.af.lang,'high'))}</div><p class="small muted" style="margin-top:.6rem">This cannot be undone once sent.</p></div><footer>${btn('Go back','closeModal')}${btn('CONFIRM & SEND','doSend',{cls:'danger',icon:'send',dis:!Object.values(S.af.ch).some(Boolean)})}</footer>`}
+    if(m.type==='sched')inner=`<header><h2 id="mt">Schedule alert</h2><button class="iconbtn" data-act="closeModal" aria-label="Close">${ic('x',18)}</button></header><div class="body"><label class="f"><span>Send at</span><input type="time" id="stime" value="14:15"></label><p class="small muted">The alert is added to the log as scheduled and can be cancelled before it goes out.</p></div><footer>${btn('Go back','closeModal')}${btn('SCHEDULE','doSched',{cls:'pri',icon:'clock'})}</footer>`;
+    if(m.type==='shelter'){const s=SHELTERS.find(x=>x.id===m.id),ss=shStatus(s),occ=s.occ[S.stage];inner=`<header><h2 id="mt">${s.name}</h2><button class="iconbtn" data-act="closeModal" aria-label="Close">${ic('x',18)}</button></header><div class="body"><p><span class="rb lv-${ss.lv}">${ic(ss.ic,14)}${ss.k}</span> <span class="ta">${s.ta}</span></p><dl class="det" style="display:block;padding:0;border:0"><dl><dt>Site</dt><dd>${s.site}</dd><dt>Distance</dt><dd>${s.dist} km · ${s.min} min</dd><dt>Occupancy</dt><dd>${occ} / ${s.cap} (${s.cap-occ} free)</dd><dt>Water</dt><dd>${s.water}</dd><dt>Food</dt><dd>${s.food}</dd><dt>Medical</dt><dd>${s.med}</dd><dt>Contact</dt><dd>${s.phone} (sample)</dd></dl></dl></div><footer>${btn('Close','closeModal')}${btn('VIEW ROUTE','viewRoute',{id:s.id,cls:'pri',icon:'route'})}</footer>`}
+    h+=`<div class="scrim" data-act="scrim"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="mt" id="modal">${inner}</div></div>`;
+  }
+  $('#overlay').innerHTML=h;
+  const f=$('#drawer .iconbtn')||$('#modal .iconbtn');if(f&&!S._ofocus){f.focus();S._ofocus=1}if(!h)S._ofocus=0;
+}
+function dock(){
+  const d=$('#dock');if(!S.loggedIn&&!S.citizenOnly){d.innerHTML='';d.hidden=true;return}d.hidden=false;
+  d.innerHTML=`<header><span>${ic('sliders',18)}</span>Demo mode <span class="small" style="opacity:.85;font-weight:500">· ${STAGES[S.stage].n}</span><button data-act="dockToggle" aria-expanded="${S.dockOpen}" aria-label="Toggle demo panel">${ic('chev',18)}</button></header>
+  ${S.dockOpen?`<div class="dbody"><div class="stages" role="group" aria-label="Simulate flood stage">${STAGES.map((s,i)=>`<button data-act="stage" data-id="${i}" aria-pressed="${S.stage===i}">${s.n.replace(' risk','')}</button>`).join('')}</div>
+  <div class="row2"><button class="btn ${S.auto?'':'pri'}" data-act="autoplay">${ic(S.auto?'stop':'play',16)}${S.auto?'Stop scenario':'Play full scenario'}</button></div>
+  <p class="small" style="margin:.5rem 0 0;opacity:.9">Normal → Warning → High → Critical. Map, scores, XAI, countdown, route and alerts all update.</p></div>`:''}`;
+}
+
+/* =====================================================================
+   RENDER + EVENTS
+   ===================================================================== */
+function focusKey(){const a=document.activeElement;if(!a||a===document.body)return null;if(a.dataset&&a.dataset.act)return `[data-act="${a.dataset.act}"]${a.dataset.id!==undefined?`[data-id="${a.dataset.id}"]`:''}`;if(a.id)return '#'+a.id;return null}
+function render(){
+  const fk=focusKey(),sy=window.scrollY;
+  document.documentElement.classList.toggle('large',S.large);
+  document.documentElement.lang=S.lang==='ta'?'ta':'en';
+  const app=$('#app');
+  if(S.citizenOnly)app.innerHTML=citizenOnlyView();
+  else app.innerHTML=S.loggedIn?shell(VIEWS[S.view]()):loginView();
+  overlays();dock();
+  if(fk&&!S.drawer&&!S.modal){const e=document.querySelector(fk);if(e)e.focus({preventScroll:true})}
+  window.scrollTo(0,sy);
+  tick(true);
+}
+function tick(noAdvance){
+  if(!noAdvance){if(S.stage>=1&&S.secs>0)S.secs--;S.sim++}
+  document.querySelectorAll('[data-cd]').forEach(e=>{const off=+(e.dataset.off||0),s=Math.max(0,S.secs+off*60);e.textContent=e.dataset.f==='hm'?fHM(Math.ceil(s/60)):fHMS(s)});
+  document.querySelectorAll('[data-clock]').forEach(e=>e.textContent=fClock(S.sim));
+  const a=S.alertSent;if(a){if(!noAdvance)a.age++;const g=(x,d)=>clamp(x/d,0,1),v={del:a.n*g(a.age,8)*.96,read:a.n*g(a.age-3,25)*.74,ack:a.n*g(a.age-6,45)*.41,route:a.n*g(a.age-10,70)*.22};
+    document.querySelectorAll('[data-resp]').forEach(e=>e.textContent=Math.round(v[e.dataset.resp]).toLocaleString('en-IN'));
+    document.querySelectorAll('[data-respb]').forEach(e=>e.style.width=(v[e.dataset.respb]/a.n*100).toFixed(1)+'%')}
+  const s=S.sos;if(s&&!noAdvance){s.age++;const st=s.age<3?'Queued on device':s.age<6?'Sent via GSM gateway':'Acknowledged by control room';if(st!==s.st){s.st=st;const e=$('#sosst');if(e)e.textContent=st}}
+}
+setInterval(()=>tick(),1000);
+
+function go(v){S.view=v;S.navOpen=false;S.bell=false;S.mz=1;S.mc=[500,310];render();const m=$('#main');if(m){window.scrollTo(0,0);m.focus({preventScroll:true})}}
+const ACT={
+  nav:e=>go(e.dataset.id),
+  menu:()=>{S.navOpen=!S.navOpen;render()},
+  bell:()=>{S.bell=!S.bell;render()},
+  lang:e=>{S.lang=e.dataset.id;render()},
+  net:()=>{S.online=!S.online;toast(S.online?'Back online. Syncing…':'Offline mode active.');render()},
+  logout:()=>{S.loggedIn=false;S.citizenOnly=false;S.navOpen=false;render()},
+  citizenOnly:()=>{S.citizenOnly=true;render()},
+  ward:e=>{S.ward=+e.dataset.id;render()},
+  selWard:e=>{S.ward=+e.dataset.id;render()},
+  openWard:e=>{if(e.dataset.id)S.ward=+e.dataset.id;go('risk')},
+  rsort:e=>{S.rSort=e.dataset.id;render()},
+  why:e=>{S.ward=+e.dataset.id;S.drawer={ward:+e.dataset.id};render()},
+  closeDrawer:()=>{S.drawer=null;render()},
+  closeModal:()=>{S.modal=null;render()},
+  scrim:(e,ev)=>{if(ev.target===e){S.modal=null;render()}},
+  xo:e=>{S.xo[e.dataset.id]=!S.xo[e.dataset.id];render()},
+  goXai:e=>{S.ward=+e.dataset.id;S.drawer=null;go('xai')},
+  goRoute:e=>{S.ward=+e.dataset.id;S.drawer=null;S.shelter='A';go('evac')},
+  goAlert:e=>{S.af.ward=String(e.dataset.id);S.drawer=null;go('alerts')},
+  mapMode:e=>{S.mapMode=e.dataset.id;render()},
+  zoom:e=>{const d=+e.dataset.id;if(d===0){S.mz=1;S.mc=[500,310]}else S.mz=clamp(S.mz*(d>0?1.5:1/1.5),1,4);render()},
+  zoomWard:()=>{const w=WARDS.find(x=>x.id===S.ward);S.mz=2.4;S.mc=[w.x,w.y];render()},
+  shelterSel:e=>{S.shelter=e.dataset.id;render()},
+  shelterPick:e=>{S.modal={type:'shelter',id:e.dataset.id};render()},
+  viewRoute:e=>{S.shelter=e.dataset.id;S.modal=null;go('evac')},
+  alt:()=>{S.routeAlt=true;toast('Safe alternative shown: elevated ridge route to Shelter A.');render()},
+  stage:e=>{stopAuto();setStage(+e.dataset.id)},
+  autoplay:()=>{if(S.auto){stopAuto();render();return}setStage(0,true);S.auto=setInterval(()=>{if(S.stage>=3){stopAuto();render();return}setStage(S.stage+1)},7000);toast('Scenario started: rainfall is about to increase.');render()},
+  dockToggle:()=>{S.dockOpen=!S.dockOpen;dock()},
+  confirmAlert:()=>{if(!Object.values(S.af.ch).some(Boolean)){toast('Select at least one channel.');return}S.modal={type:'confirm'};render()},
+  schedAlert:()=>{S.modal={type:'sched'};render()},
+  cancelAlert:()=>{S.af={ward:String(S.ward),lang:'both',ch:{sms:1,wa:1,gsm:1}};toast('Alert cancelled.');render()},
+  doSend:()=>{const chs=['sms','wa','gsm'].filter(k=>S.af.ch[k]).map(k=>({sms:'SMS',wa:'WhatsApp',gsm:'GSM'}[k])),n=alertRecipients(),wn=S.af.ward==='all'?'all high-risk wards':'Ward '+S.af.ward;
+    S.alertSent={age:0,n,chs:chs.join(' + '),wardName:wn,ts:fClock(S.sim)};S.alertLog.unshift({t:f12(S.sim/60),ward:wn,lv:S.stage>=3?'CRITICAL':'HIGH',ch:chs.join(', '),n});S.modal=null;toast(`Alert sent to ${n.toLocaleString('en-IN')} residents (${chs.join(' + ')}).`);render()},
+  doSched:()=>{const tm=$('#stime').value||'14:15';S.alertLog.unshift({t:tm,ward:S.af.ward==='all'?'All high-risk wards':'Ward '+S.af.ward,lv:'HIGH',ch:'SMS, WhatsApp',n:alertRecipients(),sched:1});S.modal=null;toast('Alert scheduled for '+tm+'.');render()},
+  verify:e=>{const r=S.reports.find(x=>x.id==e.dataset.id);if(r){r.v=true;toast('Report verified.')}render()},
+  gps:()=>{const out=$('#gpsout');if(S.faults.gps||!navigator.geolocation){S.rf.gps='Location unavailable. Type your location manually.';render();return}
+    out.textContent='Locating…';navigator.geolocation.getCurrentPosition(p=>{S.rf.gps=`GPS ${p.coords.latitude.toFixed(4)}, ${p.coords.longitude.toFixed(4)}`;S.rf.loc=$('#rl')?.value||'';render()},()=>{S.rf.gps='Location unavailable. Type your location manually.';render()},{timeout:6000})},
+  dispatch:e=>{const tm=S.teams.find(x=>x.id===e.dataset.id);tm.status='EN ROUTE';tm.ward=S.ward;const w=WARDS.find(x=>x.id===S.ward);tm.x=w.x+30;tm.y=w.y-25;toast(`Team ${tm.id} dispatched to Ward ${S.ward}.`);render()},
+  sendSos:()=>{S.rf.sn=$('#sn').value;S.rf.sb=$('#sb').value;S.rf.sr=$('#sr').value;S.sos={t:fClock(S.sim),age:0,st:'Queued on device'};toast('SOS queued via GSM.');render()},
+  sync:()=>{if(!S.online){toast('No internet. Sync will start when the connection returns.');return}S.syncing=true;render();setTimeout(()=>{S.syncing=false;S.lastSync=f12(S.sim/60);toast('Offline cache synchronized.');render()},2200)},
+  ctab:e=>{S.ctab=e.dataset.id;render()},
+  cRoute:e=>{S.shelter=e.dataset.id;S.ctab='route';render()},
+  navstart:()=>{S.navStarted=true;render()},
+  cReport:e=>{S.reports.unshift({id:Date.now(),type:e.dataset.id,sev:'Medium',loc:'Ward 12 · citizen GPS',desc:'Quick report from citizen app.',ago:0,x:452,y:362,v:false,src:'Citizen (mobile)',min:0,mine:1});S.rf.crmsg='Report sent. Thank you. Officers can see it on the map.';toast('Report submitted.');render()},
+  cSos:()=>{S.rf.csos=S.online?'SOS sent with your location.':'No internet. SOS sent by GSM SMS.';toast(S.rf.csos);render()}
+};
+function stopAuto(){if(S.auto){clearInterval(S.auto);S.auto=null}}
+document.addEventListener('click',ev=>{const e=ev.target.closest('[data-act]');if(!e||e.disabled)return;const f=ACT[e.dataset.act];if(f){if(e.dataset.act==='scrim'&&ev.target!==e)return;f(e,ev)}});
+document.addEventListener('keydown',ev=>{
+  if(ev.key==='Escape'){if(S.modal){S.modal=null;render()}else if(S.drawer){S.drawer=null;render()}else if(S.bell){S.bell=false;render()}return}
+  if((ev.key==='Enter'||ev.key===' ')&&ev.target.matches&&ev.target.matches('g[data-act]')){ev.preventDefault();ACT[ev.target.dataset.act](ev.target,ev)}
+  if(ev.key==='Tab'&&(S.modal||S.drawer)){const c=$(S.modal?'#modal':'#drawer');const els=[...c.querySelectorAll('button:not([disabled]),input,select,textarea,[href]')];if(!els.length)return;const a=els[0],z=els[els.length-1];if(ev.shiftKey&&document.activeElement===a){ev.preventDefault();z.focus()}else if(!ev.shiftKey&&document.activeElement===z){ev.preventDefault();a.focus()}}
+});
+document.addEventListener('change',ev=>{
+  const e=ev.target,k=e.dataset&&e.dataset.chg;
+  if(e.id==='sq'){const v=e.value,m=v.match(/Ward (\d+)/);const s=SHELTERS.find(x=>x.name===v);if(m){S.ward=+m[1];go('risk')}else if(s){S.shelter=s.id;S.modal={type:'shelter',id:s.id};render()}return}
+  if(!k)return;
+  if(k==='layer'){S.layers[e.dataset.id]=e.checked?1:0;render()}
+  else if(k==='xward'){S.ward=+e.value;render()}
+  else if(k==='aw'){S.af.ward=e.value;render()}
+  else if(k==='alang'){S.af.lang=e.value;render()}
+  else if(k==='ach'){S.af.ch[e.value]=e.checked?1:0;const ta=$('#amsg');render()}
+  else if(k==='fault'){S.faults[e.dataset.id]=e.checked;render()}
+  else if(k==='netbox'){S.online=!e.checked;toast(S.online?'Back online.':'Offline mode active.');render()}
+  else if(k==='large'){S.large=e.checked;render()}
+  else if(k==='sosf'){S.rf.sn=$('#sn').value;S.rf.sb=$('#sb').value;S.rf.sr=$('#sr').value;const r=$('#sosraw');if(r)r.textContent=sosString()}
+  else if(k==='sosloc'){S.sosLoc=e.value;render()}
+});
+document.addEventListener('input',ev=>{if(ev.target.id==='sb'){const r=$('#sosraw');if(r){S.rf.sb=ev.target.value;r.textContent=sosString()}}});
+document.addEventListener('submit',ev=>{
+  ev.preventDefault();const f=ev.target;
+  if(f.id==='loginForm'){const u=$('#lu').value.trim(),p=$('#lp').value;if(!u||!p){$('#lerr').textContent='Enter your username and password.';return}
+    S.user=u;S.role=$('#lr').value;S.loggedIn=true;S.view=S.role==='Field Rescue Team'?'rescue':'dashboard';render();toast('Signed in as '+S.role+'.')}
+  if(f.id==='repForm'){const loc=$('#rl').value.trim();if(!loc){$('#rlerr').textContent='Enter a location or use GPS.';$('#rl').focus();return}
+    const w=WARDS.find(x=>loc.toLowerCase().includes('ward '+x.id)||loc.toLowerCase().includes(x.loc.toLowerCase()))||WARDS[11];
+    S.reports.unshift({id:Date.now(),type:$('#rt').value,sev:$('#rs').value,loc,desc:$('#rd').value.trim()||'No description.',ago:0,x:w.x+(Math.random()*40-20),y:w.y+(Math.random()*40-20),v:false,src:'Officer entry',min:0,mine:1});
+    S.rf={};toast('Report submitted. It supports the prediction but does not change the risk score.');render()}
+});
+window.addEventListener('online',()=>{S.online=true;toast('Network restored.');render()});
+window.addEventListener('offline',()=>{S.online=false;toast('Offline mode active.');render()});
+render();
+</script>
+</body>
+</html>
